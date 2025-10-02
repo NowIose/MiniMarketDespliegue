@@ -12,13 +12,20 @@
             <span>Hola, {{ user.username }}</span>
             <a href="{% url 'logout' %}">Cerrar Sesión</a>
 
+            {# Menú para Gerentes #}
             {% if user.empleado.cargo.cargo == "Gerente" %}
                 <a href="{% url 'ver_clientes' %}">Clientes</a>
                 <a href="{% url 'ver_empleados' %}">Empleados</a>
                 <a href="{% url 'ver_bitacora' %}">Bitácora</a>
             {% endif %}
 
+            {# Menú para Empleados (puede ver productos) #}
+            {% if user.empleado.cargo.cargo != "Gerente" %}
+                <a href="{% url 'ver_productos' %}">Productos</a>
+            {% endif %}
+
         {% else %}
+            {# Menú para usuarios no autenticados #}
             <a href="{% url 'login' %}">Iniciar Sesión</a>
             <a href="{% url 'signup' %}">Registrarse</a>
         {% endif %}
@@ -27,6 +34,14 @@
     <hr>
 
     <div>
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         {% block content %}
         <!-- Aquí se insertará el contenido de cada página -->
         {% endblock %}

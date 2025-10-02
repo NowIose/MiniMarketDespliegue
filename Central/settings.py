@@ -47,7 +47,9 @@ INSTALLED_APPS = [
 ###### MODELO DE USUARIO PERSONALIZADO
 AUTH_USER_MODEL = 'Usuarios.Usuario'   #IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJNAGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
 ##############################
-
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

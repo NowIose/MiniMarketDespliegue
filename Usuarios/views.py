@@ -34,8 +34,18 @@ def hello(request,username):
 
 ##LOGEO DE USUARIOS
 
-def home(request):
+'''def home(request): #ANTIGUA VERSION
     return render(request, 'home.html')
+'''
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages #importa mensajes para notificaciones
+
+def home(request):
+    # Verifica si el usuario tiene un registro de Empleado y está incompleto
+    if hasattr(request.user, 'empleado') and not request.user.empleado.estado:
+        messages.info(request, "Fuiste asignado como empleado, por favor completa tus datos.")
+    return render(request, 'home.html')
+
 
 '''def signup(request):
     if request.method == "POST":
@@ -108,14 +118,43 @@ def ver_clientes(request):
     clientes = Cliente.objects.select_related('usuario').all()
     return render(request, 'clientes.html', {'clientes': clientes})
 
-@login_required
+'''@login_required
 @cargo_requerido("Gerente")
 def ver_empleados(request):
     empleados = Empleado.objects.select_related('usuario', 'cargo').all()
-    return render(request, 'empleados.html', {'empleados': empleados})
+    return render(request, 'empleados.html', {'empleados': empleados})'''
+@login_required
+@cargo_requerido("Gerente")
+def ver_empleados(request):
+    # Lista de empleados ya creados
+    empleados = Empleado.objects.select_related('usuario', 'cargo').all()
+    
+    # Usuarios que aún no son empleados
+    usuarios_pendientes = Usuario.objects.exclude(empleado__isnull=False)
+    
+    return render(request, 'empleados.html', {
+        'empleados': empleados,
+        'usuarios_pendientes': usuarios_pendientes
+    })
 
 @login_required
 @cargo_requerido("Gerente")
 def ver_bitacora(request):
     bitacoras = Bitacora.objects.select_related('usuario').order_by('-fecha')
     return render(request, 'bitacora.html', {'bitacoras': bitacoras})
+
+@login_required
+@cargo_requerido("Gerente")
+def asignar_empleado(request, usuario_id):
+    usuario = Usuario.objects.get(id=usuario_id)
+    cargos = CargoLaboral.objects.all()
+    
+    if request.method == "POST":
+        cargo_id = request.POST.get('cargo')
+        cargo = CargoLaboral.objects.get(id=cargo_id)
+        # Crear registro de Empleado sin todos los datos todavía
+        Empleado.objects.create(usuario=usuario, cargo=cargo, estado=False)
+        # Redirigir o mostrar mensaje
+        return redirect('ver_empleados')
+    
+    return render(request, 'asignar_empleado.html', {'usuario': usuario, 'cargos': cargos})

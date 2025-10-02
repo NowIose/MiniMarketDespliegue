@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Asignar Empleado{% endblock %}
+
+{% block content %}
+<h2>Asignar a {{ usuario.username }} como empleado</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <label>Cargo:</label>
+    <select name="cargo">
+        {% for cargo in cargos %}
+        <option value="{{ cargo.id }}">{{ cargo.cargo }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Asignar</button>
+</form>
+{% endblock %}

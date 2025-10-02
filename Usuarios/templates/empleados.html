@@ -1,12 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Empleados{% endblock %}
+
 {% block content %}
-  <h2>Empleados</h2>
-  <ul>
-    {% for e in empleados %}
-      <li>{{ e.usuario.username }} — CI: {{ e.ci }} — Cargo: {{ e.cargo.cargo }}</li>
-    {% empty %}
-      <li>No hay empleados</li>
-    {% endfor %}
-  </ul>
+<h2>Empleados</h2>
+<ul>
+  {% for e in empleados %}
+    <li>{{ e.usuario.username }} — CI: {{ e.ci }} — Cargo: {{ e.cargo.cargo }}</li>
+  {% empty %}
+    <li>No hay empleados</li>
+  {% endfor %}
+</ul>
+
+{% if usuarios_pendientes %}
+<h2>Usuarios pendientes de ser empleados</h2>
+<ul>
+  {% for u in usuarios_pendientes %}
+    <li>
+      {{ u.username }} — {{ u.correo }}
+      <a href="{% url 'asignar_empleado' u.id %}">Asignar como empleado</a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No hay usuarios pendientes de ser empleados.</p>
+{% endif %}
 {% endblock %}
