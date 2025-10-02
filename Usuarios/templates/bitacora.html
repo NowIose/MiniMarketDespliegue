@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Bitácora{% endblock %}
+{% block content %}
+  <h2>Bitácora</h2>
+  <ul>
+    {% for b in bitacoras %}
+      <li>{{ b.fecha }} — {{ b.usuario.username }} — {{ b.ip }} — {{ b.descripcion }}</li>
+    {% empty %}
+      <li>No hay entradas</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Empleados{% endblock %}
+{% block content %}
+  <h2>Empleados</h2>
+  <ul>
+    {% for e in empleados %}
+      <li>{{ e.usuario.username }} — CI: {{ e.ci }} — Cargo: {{ e.cargo.cargo }}</li>
+    {% empty %}
+      <li>No hay empleados</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

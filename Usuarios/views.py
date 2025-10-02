@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from Usuarios.models import Usuario,Cliente,Empleado,CargoLaboral
+from Usuarios.models import Usuario,Cliente,Empleado,CargoLaboral,Bitacora
 from django.http import JsonResponse, HttpResponse # Import HttpResponse if needed
 from django.contrib.auth.forms import UserCreationForm #Crea el formulario de registro
 
@@ -98,3 +98,24 @@ def signup(request):
         form = CustomUserCreationForm()
 
     return render(request, 'signup.html', {'form': form})
+
+from django.contrib.auth.decorators import login_required
+from .decorators import cargo_requerido
+
+@login_required
+@cargo_requerido("Gerente")
+def ver_clientes(request):
+    clientes = Cliente.objects.select_related('usuario').all()
+    return render(request, 'clientes.html', {'clientes': clientes})
+
+@login_required
+@cargo_requerido("Gerente")
+def ver_empleados(request):
+    empleados = Empleado.objects.select_related('usuario', 'cargo').all()
+    return render(request, 'empleados.html', {'empleados': empleados})
+
+@login_required
+@cargo_requerido("Gerente")
+def ver_bitacora(request):
+    bitacoras = Bitacora.objects.select_related('usuario').order_by('-fecha')
+    return render(request, 'bitacora.html', {'bitacoras': bitacoras})

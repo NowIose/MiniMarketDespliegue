@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'Usuarios',
+    'Usuarios.apps.UsuariosConfig', #cambiada a 'Usuarios' por 'Usuarios.apps.UsuariosConfig' para que se carguen las señales
     'Productos',
     'Ventas',
     'Inventario',
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
 ]
 
 ###### MODELO DE USUARIO PERSONALIZADO

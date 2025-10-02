@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+from django.core.exceptions import ObjectDoesNotExist #capturar error si no existe el objeto
+
 class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, null=False)
     correo = models.EmailField(unique=True, null=False)
@@ -25,6 +27,16 @@ class Usuario(AbstractUser):
     """
     def __str__(self):
         return f"{self.username} ({self.correo})"
+    @property
+    def es_gerente(self):
+        """
+        True si el usuario tiene un Empleado asociado cuyo cargo es 'Gerente'.
+        Evita errores si no existe el objeto Empleado.
+        """
+        try:
+            return self.empleado.cargo.cargo == "Gerente"
+        except ObjectDoesNotExist:
+            return False
 
 ####CLIENTE
     
