@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Completar Registro Empleado{% endblock %}
+{% block content %}
+  <h2>Completar Datos de Empleado</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}   <!-- Aquí Django genera los inputs con los nombres correctos -->
+    <button type="submit">Guardar</button>
+  </form>
+{% endblock %}

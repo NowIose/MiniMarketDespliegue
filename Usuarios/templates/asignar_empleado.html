@@ -7,12 +7,7 @@
 
 <form method="post">
     {% csrf_token %}
-    <label>Cargo:</label>
-    <select name="cargo">
-        {% for cargo in cargos %}
-        <option value="{{ cargo.id }}">{{ cargo.cargo }}</option>
-        {% endfor %}
-    </select>
+    {{ form.as_p }}   {# Esto renderiza el select de cargo y el input de sueldo automáticamente #}
     <button type="submit">Asignar</button>
 </form>
 {% endblock %}

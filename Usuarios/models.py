@@ -55,7 +55,7 @@ class CargoLaboral(models.Model):
         return self.cargo
 
 #####EMPLEADO  
-class Empleado(models.Model):
+'''class Empleado(models.Model):
     usuario=models.OneToOneField(Usuario, on_delete=models.PROTECT,primary_key=True)
     ci=models.IntegerField(unique=True)
     sexo=models.CharField(max_length=1)
@@ -64,6 +64,58 @@ class Empleado(models.Model):
     sueldo=models.DecimalField(max_digits=10, decimal_places=2)
     estado=models.BooleanField()
     cargo=models.ForeignKey(CargoLaboral,on_delete=models.PROTECT)
+
+    def __str__(self):
+        return (
+            f"Usuario: {self.usuario.username}, "
+            f"CI: {self.ci}, "
+            f"Sexo: {self.sexo}, "
+            f"Dirección: {self.direccion}, "
+            f"Fecha Contratación: {self.fecha_contratacion}, "
+            f"Sueldo: {self.sueldo}, "
+            f"Estado: {self.estado}, "
+            f"Cargo: {self.cargo.cargo}"
+        )'''
+# Usuarios/models.py (solo la clase Empleado)
+'''class Empleado(models.Model):
+    usuario = models.OneToOneField(Usuario, on_delete=models.PROTECT, primary_key=True)
+    ci = models.IntegerField(unique=True, null=True, blank=True)
+    sexo = models.CharField(max_length=1, null=True, blank=True)
+    direccion = models.CharField(max_length=100, null=True, blank=True)
+    fecha_contratacion = models.DateField(null=True, blank=True)
+    sueldo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    estado = models.BooleanField(default=False)  # False = aún no completó registro
+    cargo = models.ForeignKey(CargoLaboral, on_delete=models.PROTECT)
+
+    def __str__(self):
+        # manejar valores None para que no explote el __str__
+        ci = self.ci or "N/A"
+        sexo = self.sexo or "-"
+        direccion = self.direccion or "-"
+        fecha = self.fecha_contratacion or "-"
+        sueldo = self.sueldo or 0
+        cargo_nombre = self.cargo.cargo if self.cargo else "-"
+        return (
+            f"Usuario: {self.usuario.username}, "
+            f"CI: {ci}, "
+            f"Sexo: {sexo}, "
+            f"Dirección: {direccion}, "
+            f"Fecha Contratación: {fecha}, "
+            f"Sueldo: {sueldo}, "
+            f"Estado: {self.estado}, "
+            f"Cargo: {cargo_nombre}"
+        )'''
+class Empleado(models.Model):
+    usuario = models.OneToOneField(Usuario, on_delete=models.PROTECT, primary_key=True)
+    ci = models.IntegerField(unique=True, null=True, blank=True)  # empleado
+    sexo = models.CharField(max_length=1, null=True, blank=True)  # empleado
+    direccion = models.CharField(max_length=100, null=True, blank=True)  # empleado
+    
+    fecha_contratacion = models.DateField(null=True, blank=True)  # se pondrá al completar registro
+    sueldo = models.DecimalField(max_digits=10, decimal_places=2)  # gerente
+    
+    estado = models.BooleanField(default=False)
+    cargo = models.ForeignKey(CargoLaboral, on_delete=models.PROTECT)
 
     def __str__(self):
         return (
