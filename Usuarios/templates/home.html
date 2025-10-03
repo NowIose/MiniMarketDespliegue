@@ -3,6 +3,25 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <h2>Bienvenido al MiniMarket</h2>
-    <p>Esta es la página principal.</p>
+<!-- Sección principal con fondo y espaciado -->
+<div class="container-fluid p-5 text-white" style="background: linear-gradient(to right, #4e73df, #1cc88a); min-height: 80vh;">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">MiniMarket Sandra</h1>
+        <p class="lead mb-4">
+            Bienvenido al MiniMarket Sandra, tu tienda de confianza en Santa Cruz de la Sierra, Bolivia. 
+            Nos encontramos en la Av. Nuevo Palmar y ofrecemos productos frescos, de calidad y a los mejores precios.
+        </p>
+        <img src="https://images.unsplash.com/photo-1585238342024-78d63d5b8f3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60" 
+             alt="MiniMarket" class="img-fluid rounded shadow" style="max-width: 600px;">
+    </div>
+</div>
+
+<!-- Sección adicional con fondo claro -->
+<div class="container my-5 p-4 bg-light rounded shadow-sm">
+    <h3 class="mb-3 text-center">¿Por qué elegirnos?</h3>
+    <p>
+        En MiniMarket Sandra, nos enfocamos en ofrecer productos de calidad, excelente atención al cliente y precios competitivos.
+        Ven y descubre nuestra variedad de productos frescos y ofertas semanales.
+    </p>
+</div>
 {% endblock %}

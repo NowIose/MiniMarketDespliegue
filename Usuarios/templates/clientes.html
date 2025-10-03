@@ -1,12 +1,25 @@
 {% extends "base.html" %}
+
 {% block title %}Clientes{% endblock %}
+
 {% block content %}
-  <h2>Clientes</h2>
-  <ul>
-    {% for c in clientes %}
-      <li>{{ c.usuario.username }} — {{ c.usuario.correo }}</li>
-    {% empty %}
-      <li>No hay clientes</li>
-    {% endfor %}
-  </ul>
+<div class="container mt-5">
+  <h2 class="mb-4">Lista de Clientes</h2>
+
+  {% if clientes %}
+    <div class="list-group">
+      {% for c in clientes %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ c.usuario.username }}</strong> — {{ c.usuario.correo }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      No hay clientes registrados.
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

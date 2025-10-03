@@ -1,12 +1,38 @@
 {% extends "base.html" %}
+
 {% block title %}Bitácora{% endblock %}
+
 {% block content %}
-  <h2>Bitácora</h2>
-  <ul>
-    {% for b in bitacoras %}
-      <li>{{ b.fecha }} — {{ b.usuario.username }} — {{ b.ip }} — {{ b.descripcion }}</li>
-    {% empty %}
-      <li>No hay entradas</li>
-    {% endfor %}
-  </ul>
+<div class="container mt-5">
+  <h2 class="mb-4">Bitácora de Usuarios</h2>
+
+  {% if bitacoras %}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>IP</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bitacoras %}
+            <tr>
+              <td>{{ b.fecha }}</td>
+              <td>{{ b.usuario.username }}</td>
+              <td>{{ b.ip }}</td>
+              <td>{{ b.descripcion }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      No hay entradas en la bitácora.
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

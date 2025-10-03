@@ -1,12 +1,65 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block title %}Registro{% endblock %}
 
 {% block content %}
-<h2>Registro</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Registrarse</button>
-</form>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg p-4">
+                <h2 class="text-center mb-4">Registro</h2>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            {{ field.label_tag }}
+                            {{ field|add_class:"form-control" }}
+                            {% if field.errors %}
+                                <div class="alert alert-danger mt-1 p-1">
+                                    {% for error in field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="form-check mb-2">
+                        {{ form.te|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ form.te.id_for_label }}">
+                            Acepto los términos de la empresa
+                        </label>
+                        {% if form.te.errors %}
+                            <div class="alert alert-danger mt-1 p-1">
+                                {% for error in form.te.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check mb-4">
+                        {{ form.tc|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ form.tc.id_for_label }}">
+                            Acepto los términos y condiciones
+                        </label>
+                        {% if form.tc.errors %}
+                            <div class="alert alert-danger mt-1 p-1">
+                                {% for error in form.tc.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Registrarse</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

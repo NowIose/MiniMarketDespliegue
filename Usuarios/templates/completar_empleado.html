@@ -1,10 +1,26 @@
 {% extends "base.html" %}
+
 {% block title %}Completar Registro Empleado{% endblock %}
+
 {% block content %}
-  <h2>Completar Datos de Empleado</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}   <!-- Aquí Django genera los inputs con los nombres correctos -->
-    <button type="submit">Guardar</button>
-  </form>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0 rounded-3 p-4">
+        <div class="text-center mb-4">
+          <h2 class="fw-bold">Completar Datos de Empleado</h2>
+          <p class="text-muted">Por favor, completa toda la información requerida.</p>
+        </div>
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-success btn-lg">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

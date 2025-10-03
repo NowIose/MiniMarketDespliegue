@@ -152,61 +152,11 @@ def ver_bitacora(request):
     bitacoras = Bitacora.objects.select_related('usuario').order_by('-fecha')
     return render(request, 'bitacora.html', {'bitacoras': bitacoras})
 
-'''@login_required
-@cargo_requerido("Gerente")
-def asignar_empleado(request, usuario_id):
-    usuario = Usuario.objects.get(id=usuario_id)
-    cargos = CargoLaboral.objects.all()
-    
-    if request.method == "POST":
-        cargo_id = request.POST.get('cargo')
-        cargo = CargoLaboral.objects.get(id=cargo_id)
-        # Crear registro de Empleado sin todos los datos todavía
-        Empleado.objects.create(usuario=usuario, cargo=cargo, estado=False)
-        # Redirigir o mostrar mensaje
-        return redirect('ver_empleados')
-    
-    return render(request, 'asignar_empleado.html', {'usuario': usuario, 'cargos': cargos})'''
+
 # en Usuarios/views.py, dentro de asignar_empleado
-'''@login_required
-@cargo_requerido("Gerente")
-def asignar_empleado(request, usuario_id):
-    usuario = Usuario.objects.get(id=usuario_id)
-    cargos = CargoLaboral.objects.all()
 
-    if request.method == "POST":
-        cargo_id = request.POST.get('cargo')
-        cargo = CargoLaboral.objects.get(id=cargo_id)
-
-        # Crear registro de Empleado incompleto
-        Empleado.objects.create(usuario=usuario, cargo=cargo, estado=False)
-
-        # Mensaje para el gerente
-        messages.success(request, f"{usuario.username} fue asignado como {cargo.cargo}. El usuario deberá completar sus datos al iniciar sesión.")
-        return redirect('ver_empleados')
-
-    return render(request, 'asignar_empleado.html', {'usuario': usuario, 'cargos': cargos})'''
 from .forms import AsignarEmpleadoForm
-'''@login_required
-@cargo_requerido("Gerente")
-def asignar_empleado(request, usuario_id):
-    usuario = Usuario.objects.get(id=usuario_id)
 
-    if request.method == "POST":
-        form = AsignarEmpleadoForm(request.POST)
-        if form.is_valid():
-            empleado = form.save(commit=False)
-            empleado.usuario = usuario
-            empleado.estado = False  # aún no completó registro
-            empleado.save()
-            return redirect('ver_empleados')
-    else:
-        form = AsignarEmpleadoForm()
-
-    return render(request, 'asignar_empleado.html', {
-        'usuario': usuario,
-        'form': form
-    })'''
 @login_required
 @cargo_requerido("Gerente")
 def asignar_empleado(request, usuario_id):
@@ -236,58 +186,7 @@ from django.contrib import messages
 from .forms import EmpleadoRegistroForm
 from django.utils import timezone
 
-'''@login_required
-def completar_registro_empleado(request):
-    # Aseguramos que el usuario tenga la relación empleado
-    try:
-        empleado = request.user.empleado
-    except Empleado.DoesNotExist:
-        messages.error(request, "No tienes una asignación como empleado.")
-        return redirect('home')
 
-    if empleado.estado:
-        messages.info(request, "Tu registro de empleado ya está completo.")
-        return redirect('home')
-
-    if request.method == "POST":
-        form = EmpleadoRegistroForm(request.POST, instance=empleado)
-        if form.is_valid():
-            emp = form.save(commit=False)
-            # si no se puso fecha, opcionalmente asignar la fecha actual
-            if not emp.fecha_contratacion:
-                emp.fecha_contratacion = timezone.now().date()
-            emp.estado = True
-            emp.save()
-            messages.success(request, "Registro de empleado completado. Ahora tienes acceso a las funciones de empleado.")
-            return redirect('home')
-    else:
-        form = EmpleadoRegistroForm(instance=empleado)
-
-    return render(request, 'completar_empleado.html', {'form': form})
-'''
-'''@login_required
-def completar_empleado(request):
-    # Validar que el usuario es empleado y está incompleto
-    if not hasattr(request.user, 'empleado'):
-        messages.error(request, "No eres un empleado asignado.")
-        return redirect('home')
-
-    empleado = request.user.empleado
-    if empleado.estado:
-        messages.info(request, "Ya completaste tu registro de empleado.")
-        return redirect('home')
-
-    if request.method == "POST":
-        empleado.ci = request.POST.get("ci")
-        empleado.sexo = request.POST.get("sexo")
-        empleado.direccion = request.POST.get("direccion")
-        empleado.fecha_contratacion = now().date()
-        empleado.estado = True
-        empleado.save()
-        messages.success(request, "Registro de empleado completado correctamente.")
-        return redirect('home')
-
-    return render(request, "completar_empleado.html", {"empleado": empleado})'''
 from django.utils.timezone import now   
 @login_required
 def completar_registro_empleado(request):
