@@ -136,3 +136,11 @@ class Bitacora(models.Model):
 
     def __str__(self):
         return f"Bitácora: {self.usuario.username} - {self.fecha} - {self.descripcion}"
+    
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=Usuario)
+def set_email_from_correo(sender, instance, **kwargs):
+    if instance.correo and not instance.email:
+        instance.email = instance.correo
