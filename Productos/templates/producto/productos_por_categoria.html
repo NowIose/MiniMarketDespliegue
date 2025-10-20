@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ categoria.nombre }}</h2>
+
+{% if subcategorias %}
+<h3>Subcategorías</h3>
+<ul>
+    {% for sub in subcategorias %}
+        <li><a href="{% url 'productos_por_categoria' sub.id %}">{{ sub.nombre }}</a></li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if productos %}
+<h3>Productos</h3>
+<ul>
+    {% for p in productos %}
+        <li>{{ p.nombre }} - {{ p.precio_venta }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if es_gerente %}
+    <a href="{% url 'crear_subcategoria' categoria.id %}">+ Subcategoría</a>
+    <a href="{% url 'crear_producto' categoria.id %}">+ Producto</a>
+{% endif %}
+{% endblock %}

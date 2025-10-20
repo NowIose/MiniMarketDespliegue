@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'listar_categorias' %}">Inicio</a>
+        {% if user.is_authenticated %}
+            <span> | Bienvenido {{ user.username }}</span>
+        {% endif %}
+    </nav>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -48,9 +48,9 @@ INSTALLED_APPS = [
 ###### MODELO DE USUARIO PERSONALIZADO
 AUTH_USER_MODEL = 'Usuarios.Usuario'   #IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJNAGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
 ##############################
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_URL = '/usuarios/login/'
+LOGIN_REDIRECT_URL = '/categorias/'
+LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -74,6 +74,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -93,7 +94,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_market',
         'USER': 'postgres',
-        'PASSWORD': '2077',
+        'PASSWORD': 'gabo2004',
         'HOST': 'localhost',   # en minúsculas, no "LOCALHOST"
         'PORT': '5432',
     }

@@ -1,0 +1,18 @@
+{% extends 'producto/base.html' %}
+{% block content %}
+<h2>Agregar subcategoría a {{ categoria_padre.nombre }}</h2>
+{% if es_gerente %}
+    {% if not categoria.categoria_padre %}
+        <a href="{% url 'crear_subcategoria' categoria.id %}">➕ Agregar subcategoría</a>
+    {% else %}
+        <a href="{% url 'crear_producto' categoria.id %}">➕ Agregar producto</a>
+    {% endif %}
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <label>Nombre:</label>
+    <input type="text" name="nombre" required>
+
+    <button type="submit">Guardar</button>
+</form>
+{% endblock %}

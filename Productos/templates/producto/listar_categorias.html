@@ -1,0 +1,16 @@
+{% extends 'producto/base.html' %}
+{% block content %}
+<h2>Categorías principales</h2>
+
+{% if es_gerente %}
+    <a href="{% url 'crear_categoria' %}">➕ Crear categoría</a>
+{% endif %}
+
+<ul>
+    {% for cat in categorias %}
+        <li><a href="{% url 'ver_categoria' cat.id %}">{{ cat.nombre }}</a></li>
+    {% empty %}
+        <li>No hay categorías registradas.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
