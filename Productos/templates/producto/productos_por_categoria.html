@@ -1,27 +1,39 @@
-{% extends 'base.html' %}
-{% block content %}
-<h2>{{ categoria.nombre }}</h2>
+{% extends "producto/base.html" %}
+{% load static %}
 
-{% if subcategorias %}
-<h3>Subcategorías</h3>
-<ul>
-    {% for sub in subcategorias %}
-        <li><a href="{% url 'productos_por_categoria' sub.id %}">{{ sub.nombre }}</a></li>
-    {% endfor %}
-</ul>
-{% endif %}
+{% block title %}Productos{% endblock %}
 
-{% if productos %}
-<h3>Productos</h3>
-<ul>
-    {% for p in productos %}
-        <li>{{ p.nombre }} - {{ p.precio_venta }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+{% block producto_content %}
+<h2 class="text-center mb-4">{{ categoria.nombre }}</h2>
 
-{% if es_gerente %}
-    <a href="{% url 'crear_subcategoria' categoria.id %}">+ Subcategoría</a>
-    <a href="{% url 'crear_producto' categoria.id %}">+ Producto</a>
-{% endif %}
+<div class="row">
+  {% for producto in productos %}
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 shadow-sm">
+        {% if producto.imagen %}
+          <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}">
+        {% else %}
+          <img src="{% static 'img/default-product.png' %}" class="card-img-top" alt="Sin imagen">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ producto.nombre }}</h5>
+          <p class="card-text">
+            Precio: <strong>{{ producto.precio_venta }} Bs.</strong><br>
+            {% if es_gerente %}
+              Stock: {{ producto.cantidad }} {{ producto.unidad_medida }}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-center text-muted">No hay productos disponibles en esta categoría.</p>
+  {% endfor %}
+</div>
+
+<div class="mt-4 text-center">
+  <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary">
+    ← Volver a Productos
+  </a>
+</div>
 {% endblock %}

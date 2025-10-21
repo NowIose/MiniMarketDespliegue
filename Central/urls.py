@@ -27,4 +27,10 @@ urlpatterns = [
     path('usuarios/', include('Usuarios.urls')),
     path('productos/', include('Productos.urls')),
     path('categorias/', producto_views.listar_categorias, name='listar_categorias'),
+
 ]
+# Configuración para servir archivos multimedia durante el desarrollo imagenes de productos NUEVO
+from django.conf.urls.static import static
+from django.conf import settings
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

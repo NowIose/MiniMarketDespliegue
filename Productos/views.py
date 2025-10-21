@@ -30,6 +30,12 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
+from Usuarios.decorators import cargo_requerido # Importar para ya no usar es_gerente
+
+
+
+
 # Función para verificar si el usuario es gerente
 def es_gerente(user):
     return user.groups.filter(name='Gerente').exists()
@@ -58,7 +64,7 @@ def productos_por_categoria(request, categoria_id):
 
 # Función para verificar si el usuario es gerente
 
-@login_required
+'''@login_required
 @user_passes_test(es_gerente, login_url='listar_categorias')
 def crear_categoria(request):
     if request.method == 'POST':
@@ -70,6 +76,19 @@ def crear_categoria(request):
         form = CategoriaForm()
 
     return render(request, 'producto/crear_categoria.html', {'form': form})
+'''
+@login_required
+@cargo_requerido('Gerente')
+def crear_categoria(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_categorias')
+    else:
+        form = CategoriaForm()
+    return render(request, 'producto/crear_categoria.html', {'form': form})
+
 
 @login_required
 def ver_categoria(request, categoria_id):
@@ -86,7 +105,7 @@ def ver_categoria(request, categoria_id):
 
 
 # 🔹 Crear subcategoría (solo Gerente)
-@login_required
+'''@login_required
 @user_passes_test(es_gerente, login_url='listar_categorias')
 def crear_subcategoria(request, categoria_id):
     categoria_padre = get_object_or_404(Categoria, id=categoria_id)
@@ -98,11 +117,22 @@ def crear_subcategoria(request, categoria_id):
             messages.success(request, f"Subcategoría '{nombre}' agregada correctamente.")
             return redirect('ver_categoria', categoria_id=categoria_padre.id)
 
+    return render(request, 'producto/crear_subcategoria.html', {'categoria_padre': categoria_padre})'''
+@login_required
+@cargo_requerido('Gerente')
+def crear_subcategoria(request, categoria_id):
+    categoria_padre = get_object_or_404(Categoria, id=categoria_id)
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        if nombre:
+            Categoria.objects.create(nombre=nombre, categoria_padre=categoria_padre)
+            messages.success(request, f"Subcategoría '{nombre}' agregada correctamente.")
+            return redirect('ver_categoria', categoria_id=categoria_padre.id)
     return render(request, 'producto/crear_subcategoria.html', {'categoria_padre': categoria_padre})
 
 
 # 🔹 Crear producto (solo Gerente)
-@login_required
+'''@login_required
 @user_passes_test(es_gerente, login_url='listar_categorias')
 def crear_producto(request, categoria_id):
     categoria = get_object_or_404(Categoria, id=categoria_id)
@@ -124,4 +154,46 @@ def crear_producto(request, categoria_id):
             messages.success(request, f"Producto '{nombre}' agregado correctamente.")
             return redirect('ver_categoria', categoria_id=categoria.id)
 
+    return render(request, 'producto/crear_producto.html', {'categoria': categoria})'''
+@login_required
+@cargo_requerido('Gerente')
+def crear_producto(request, categoria_id):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        cantidad = request.POST.get('cantidad')
+        unidad_medida = request.POST.get('unidad_medida')
+        precio_venta = request.POST.get('precio_venta')
+        imagen = request.FILES.get('imagen')  # PARA QUE RECOJA LA IMAGEN
+
+        if nombre and precio_venta:
+            Producto.objects.create(
+                nombre=nombre,
+                cantidad=cantidad or 0,
+                unidad_medida=unidad_medida or "Unidad",
+                precio_venta=precio_venta,
+                categoria=categoria,
+                imagen=imagen  # PARA ASIGNAR IMAGEN
+            )
+            messages.success(request, f"Producto '{nombre}' agregado correctamente.")
+            return redirect('ver_categoria', categoria_id=categoria.id)
+
     return render(request, 'producto/crear_producto.html', {'categoria': categoria})
+
+
+
+
+@login_required
+def ver_productos(request):
+    empleado = getattr(request.user, 'empleado', None)
+    # Permitir si es empleado y ya completó (estado=True)
+    if not empleado or not empleado.estado:
+        messages.warning(request, "Debes completar tu registro de empleado para acceder a productos.")
+        # Si tiene asignación pero incompleta, mandarlo a completar
+        if empleado:
+            return redirect('completar_empleado')
+        return redirect('home')
+
+    productos = Producto.objects.all()
+    return render(request, 'productos.html', {'productos': productos})
