@@ -1,0 +1,16 @@
+{% extends "producto/base.html" %}
+{% load static %}
+
+{% block title %}Editar Producto{% endblock %}
+
+{% block producto_content %}
+<h2 class="mb-4 text-center">Editar Producto: {{ producto.nombre }}</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{% url 'ver_categoria' producto.categoria.id %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

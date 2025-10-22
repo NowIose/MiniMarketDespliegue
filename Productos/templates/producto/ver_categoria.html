@@ -53,6 +53,9 @@
             {% else %}
               <span class="badge bg-secondary mt-2">Sin stock</span>
             {% endif %}
+            {% if request.user.is_authenticated and request.user.es_gerente %}
+              <a href="{% url 'editar_producto' p.id %}" class="btn btn-warning btn-sm mt-2">✏️ Editar</a>
+            {% endif %}
           </div>
         </div>
       </div>

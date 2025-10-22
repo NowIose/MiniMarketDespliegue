@@ -4,7 +4,8 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Producto, Categoria
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import CategoriaForm 
+from .forms import CategoriaForm, ProductoForm 
+
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -197,3 +198,21 @@ def ver_productos(request):
 
     productos = Producto.objects.all()
     return render(request, 'productos.html', {'productos': productos})
+
+from .forms import ProductoForm  # Necesitamos un formulario para editar
+
+@login_required
+@cargo_requerido('Gerente')  
+def editar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+    
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Producto '{producto.nombre}' actualizado correctamente.")
+            return redirect('ver_categoria', categoria_id=producto.categoria.id)
+    else:
+        form = ProductoForm(instance=producto)
+
+    return render(request, 'producto/editar_producto.html', {'form': form, 'producto': producto})
