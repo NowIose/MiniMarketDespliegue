@@ -5,19 +5,62 @@
 
 {% block content %}
 
-  {# Mostrar botón solo si estamos dentro de la sección productos (pero no en la raíz) #}
-  {% if request.path|slice:":10" == '/productos' and not request.path == '/productos/' %}
-    <div class="container mt-3">
-      <a href="{% url 'productos' %}" class="btn btn-outline-primary">
-        ← Volver a productos
-      </a>
-    </div>
-  {% endif %}
-
   <div class="container mt-4">
     {% block producto_content %}
-    <!-- Aquí se insertará el contenido específico de cada vista -->
+      <!-- Aquí se insertará el contenido específico de cada vista -->
     {% endblock %}
   </div>
+
+  {# 🛒 Carrito flotante — visible solo si el usuario está autenticado #}
+  {% if user.is_authenticated %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+      .carrito-flotante {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 1050;
+        background-color: #6f42c1;
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease-in-out;
+      }
+
+      .carrito-flotante:hover {
+        background-color: #5a379b;
+        transform: scale(1.1);
+      }
+
+      .carrito-contador {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.8rem;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+
+    <a href="{% url 'ver_carrito' %}" class="carrito-flotante" title="Ver carrito">
+      <i class="bi bi-cart-fill fs-4"></i>
+      {% with carrito=user.carrito.first %}
+        {% if carrito and carrito.items.count > 0 %}
+          <div class="carrito-contador">{{ carrito.items.count }}</div>
+        {% endif %}
+      {% endwith %}
+    </a>
+  {% endif %}
 
 {% endblock %}

@@ -57,3 +57,36 @@ class DetalleDevolucion(models.Model):
    def __str__(self):
       return f"{self.id_detalle_venta.id_producto.nombre} - {self.cantidad} unidades"
 
+
+
+#nueva clase carrito
+from django.db import models
+from Usuarios.models import Usuario  # ✅ tu modelo personalizado
+from Productos.models import Producto
+
+class Carrito(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carrito')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def total(self):
+        """Suma el total del carrito."""
+        return sum(item.subtotal() for item in self.items.all())
+
+    def __str__(self):
+        return f"Carrito de {self.usuario.username}"
+
+
+class ItemCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)
+
+    def subtotal(self):
+        """Calcula el subtotal por producto."""
+        return self.cantidad * self.producto.precio_venta
+
+    def __str__(self):
+        return f"{self.producto.nombre} x {self.cantidad}"
+
+    class Meta:
+        unique_together = ('carrito', 'producto')  # evita productos duplicados

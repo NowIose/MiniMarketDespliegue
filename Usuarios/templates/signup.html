@@ -9,27 +9,32 @@
         <div class="col-md-6">
             <div class="card shadow-lg p-4">
                 <h2 class="text-center mb-4">Registro</h2>
+
                 <form method="post" novalidate>
                     {% csrf_token %}
 
+                    {# 🔹 Campos del usuario (excluimos los checkbox) #}
                     {% for field in form %}
-                        <div class="mb-3">
-                            {{ field.label_tag }}
-                            {{ field|add_class:"form-control" }}
-                            {% if field.errors %}
-                                <div class="alert alert-danger mt-1 p-1">
-                                    {% for error in field.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
+                        {% if field.name != 'te' and field.name != 'tc' %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field|add_class:"form-control" }}
+                                {% if field.errors %}
+                                    <div class="alert alert-danger mt-1 p-1">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     {% endfor %}
 
-                    <div class="form-check mb-2">
+                    {# 🔹 Checkbox 1 - términos de la empresa #}
+                    <div class="form-check mb-3">
                         {{ form.te|add_class:"form-check-input" }}
                         <label class="form-check-label" for="{{ form.te.id_for_label }}">
-                            Acepto los términos de la empresa
+                            Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#modalEmpresa">términos de la empresa</a>
                         </label>
                         {% if form.te.errors %}
                             <div class="alert alert-danger mt-1 p-1">
@@ -40,10 +45,11 @@
                         {% endif %}
                     </div>
 
+                    {# 🔹 Checkbox 2 - términos y condiciones #}
                     <div class="form-check mb-4">
                         {{ form.tc|add_class:"form-check-input" }}
                         <label class="form-check-label" for="{{ form.tc.id_for_label }}">
-                            Acepto los términos y condiciones
+                            Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#modalTerminos">términos y condiciones</a>
                         </label>
                         {% if form.tc.errors %}
                             <div class="alert alert-danger mt-1 p-1">
@@ -61,5 +67,59 @@
             </div>
         </div>
     </div>
+</div>
+
+{# 🔸 Modal - Términos de la Empresa #}
+<div class="modal fade" id="modalEmpresa" tabindex="-1" aria-labelledby="modalEmpresaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEmpresaLabel">Términos de la Empresa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Nuestra empresa se compromete a ofrecer productos de alta calidad y un servicio responsable.
+          Los empleados y usuarios deben cumplir con las normas establecidas para garantizar una experiencia
+          segura y confiable. Cualquier mal uso de la plataforma será sancionado según nuestras políticas internas.
+        </p>
+        <p>
+          El usuario acepta que la información proporcionada es verídica y será utilizada conforme a las políticas
+          de privacidad establecidas por la empresa.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# 🔸 Modal - Términos y Condiciones Generales #}
+<div class="modal fade" id="modalTerminos" tabindex="-1" aria-labelledby="modalTerminosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTerminosLabel">Términos y Condiciones</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Al registrarse en el sistema, el usuario acepta el uso responsable de sus credenciales y la confidencialidad
+          de la información proporcionada. Está prohibido compartir cuentas o realizar actividades fraudulentas.
+        </p>
+        <p>
+          La empresa se reserva el derecho de modificar estos términos en cualquier momento. Se recomienda a los usuarios
+          revisar esta sección regularmente para mantenerse informados sobre las políticas vigentes.
+        </p>
+        <p>
+          El uso continuado del sistema implica la aceptación plena de los términos aquí descritos.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

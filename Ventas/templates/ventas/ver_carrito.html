@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Mi Carrito{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">🛍️ Mi Carrito</h2>
+
+  {# 🔙 Botón volver a productos #}
+  <div class="mb-4 text-start">
+    <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
+      ← Volver a Productos
+    </a>
+  </div>
+
+  {% if items %}
+    <table class="table table-striped align-middle text-center shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Producto</th>
+          <th>Precio Unitario</th>
+          <th>Cantidad</th>
+          <th>Subtotal</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            {{ item.producto.nombre }}
+          </td>
+          <td>{{ item.producto.precio_venta }} Bs.</td>
+          <td>
+            <form method="post" action="{% url 'actualizar_cantidad' item.id 'sumar' %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-success">+</button>
+            </form>
+
+            <strong>{{ item.cantidad }}</strong>
+
+            <form method="post" action="{% url 'actualizar_cantidad' item.id 'restar' %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">−</button>
+            </form>
+          </td>
+          <td><strong>{{ item.subtotal }} Bs.</strong></td>
+          <td>
+            <form method="post" action="{% url 'eliminar_item' item.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="text-end mt-3">
+      <h4>Total: <strong>{{ total }} Bs.</strong></h4>
+      <a href="#" class="btn btn-success mt-2">💳 Proceder al pago</a>
+    </div>
+
+  {% else %}
+    <p class="text-center text-muted">Tu carrito está vacío.</p>
+  {% endif %}
+
+  {# 🔽 Botón volver al final también #}
+  <div class="mt-4 text-center">
+    <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
+      ← Volver a Productos
+    </a>
+  </div>
+</div>
+{% endblock %}

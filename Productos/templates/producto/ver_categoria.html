@@ -1,70 +1,81 @@
 {% extends "producto/base.html" %}
 {% load static %}
 
-{% block content %}
-<h2 class="mb-3">{{ categoria.nombre }}</h2>
+{% block title %}{{ categoria.nombre }}{% endblock %}
+
+{% block producto_content %}
+<h2 class="mb-3 text-center">{{ categoria.nombre }}</h2>
 
 {# 🔼 Botón volver arriba #}
-<div class="mb-4">
+<div class="mb-4 text-start">
   <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
     ← Volver a Productos
   </a>
 </div>
 
-{# Subcategorías (ahora visibles para todos los logueados) #}
+{# Subcategorías (visibles para cualquier usuario logueado) #}
 {% if subcategorias %}
   <h4>Subcategorías</h4>
   <div class="d-flex flex-wrap mb-4">
-      {% for sub in subcategorias %}
-          <a href="{% url 'ver_categoria' sub.id %}" class="badge bg-primary text-decoration-none me-2 mb-2 p-2">
-              {{ sub.nombre }}
-          </a>
-      {% endfor %}
+    {% for sub in subcategorias %}
+      <a href="{% url 'ver_categoria' sub.id %}" class="badge bg-primary text-decoration-none me-2 mb-2 p-2">
+        {{ sub.nombre }}
+      </a>
+    {% endfor %}
   </div>
 {% endif %}
 
-{# Productos #}
+{# Productos dentro de la categoría #}
 {% if productos %}
   <h4>Productos</h4>
   <div class="row">
-      {% for p in productos %}
-          <div class="col-md-4 mb-4">
-              <div class="card shadow-sm border-0 h-100 text-center">
-                  {% if p.imagen %}
-                      <img src="{{ p.imagen.url }}" class="card-img-top" alt="{{ p.nombre }}" style="height:200px; object-fit:cover;">
-                  {% else %}
-                      <img src="{% static 'img/default-product.png' %}" class="card-img-top" alt="Sin imagen" style="height:200px; object-fit:cover;">
-                  {% endif %}
-                  <div class="card-body">
-                      <h5 class="card-title">{{ p.nombre }}</h5>
-                      <p class="card-text text-muted">Precio: <strong>{{ p.precio_venta }} Bs.</strong></p>
-                      {% if request.user.is_authenticated and request.user.empleado %}
-                          <p class="card-text">Cantidad: {{ p.cantidad }} {{ p.unidad_medida }}</p>
-                      {% endif %}
-                  </div>
-              </div>
+    {% for p in productos %}
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100 text-center">
+          {% if p.imagen %}
+            <img src="{{ p.imagen.url }}" class="card-img-top" alt="{{ p.nombre }}" style="height:200px; object-fit:cover;">
+          {% else %}
+            <img src="{% static 'img/default-product.png' %}" class="card-img-top" alt="Sin imagen" style="height:200px; object-fit:cover;">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ p.nombre }}</h5>
+            <p class="card-text text-muted">Precio: <strong>{{ p.precio_venta }} Bs.</strong></p>
+
+            {% if request.user.is_authenticated and request.user.empleado %}
+              <p class="card-text">Cantidad: {{ p.cantidad }} {{ p.unidad_medida }}</p>
+            {% endif %}
+
+            {# 🔘 Botón agregar al carrito (solo si hay stock) #}
+            {% if p.cantidad > 0 %}
+              <a href="{% url 'agregar_al_carrito' p.id %}" class="btn btn-outline-success btn-sm mt-2">
+                🛒 Agregar al carrito
+              </a>
+            {% else %}
+              <span class="badge bg-secondary mt-2">Sin stock</span>
+            {% endif %}
           </div>
-      {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
   </div>
 {% else %}
-  <p>No hay productos disponibles.</p>
+  <p class="text-muted text-center">No hay productos disponibles en esta categoría.</p>
 {% endif %}
 
-{# Botones del gerente #}
+{# 🔧 Botones del Gerente #}
 {% if request.user.is_authenticated and request.user.empleado.cargo.cargo == "Gerente" %}
-  <div class="mt-3 d-flex flex-wrap gap-2">
-      <a href="{% url 'crear_producto' categoria.id %}" class="btn btn-primary btn-sm">➕ Agregar producto</a>
-      {% if not categoria.categoria_padre %}
-          <a href="{% url 'crear_subcategoria' categoria.id %}" class="btn btn-success btn-sm">➕ Agregar subcategoría</a>
-      {% endif %}
+  <div class="mt-4 d-flex flex-wrap gap-2">
+    <a href="{% url 'crear_producto' categoria.id %}" class="btn btn-primary btn-sm">➕ Agregar producto</a>
+    {% if not categoria.categoria_padre %}
+      <a href="{% url 'crear_subcategoria' categoria.id %}" class="btn btn-success btn-sm">➕ Agregar subcategoría</a>
+    {% endif %}
   </div>
 {% endif %}
 
 {# 🔽 Botón volver abajo #}
-<div class="mt-4">
+<div class="mt-4 text-center">
   <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
     ← Volver a Productos
   </a>
 </div>
-
 {% endblock %}

@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from Usuarios import views as usuario_views
 from Productos import views as producto_views
-
+from Ventas import views as ventas_views
 urlpatterns = [
     path('', usuario_views.login_view, name='home'),  # 👈 raíz muestra el login
     path('admin/', admin.site.urls),
@@ -27,6 +27,7 @@ urlpatterns = [
     path('usuarios/', include('Usuarios.urls')),
     path('productos/', include('Productos.urls')),
     path('categorias/', producto_views.listar_categorias, name='listar_categorias'),
+    path('ventas/', include('Ventas.urls')),
 
 ]
 # Configuración para servir archivos multimedia durante el desarrollo imagenes de productos NUEVO

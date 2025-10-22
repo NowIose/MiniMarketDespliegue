@@ -1,39 +1,59 @@
 {% extends "producto/base.html" %}
 {% load static %}
 
-{% block title %}Productos{% endblock %}
+{% block title %}Productos - {{ categoria.nombre }}{% endblock %}
 
 {% block producto_content %}
 <h2 class="text-center mb-4">{{ categoria.nombre }}</h2>
 
-<div class="row">
-  {% for producto in productos %}
-    <div class="col-md-4 mb-3">
-      <div class="card h-100 shadow-sm">
-        {% if producto.imagen %}
-          <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}">
-        {% else %}
-          <img src="{% static 'img/default-product.png' %}" class="card-img-top" alt="Sin imagen">
-        {% endif %}
-        <div class="card-body">
-          <h5 class="card-title">{{ producto.nombre }}</h5>
-          <p class="card-text">
-            Precio: <strong>{{ producto.precio_venta }} Bs.</strong><br>
-            {% if es_gerente %}
-              Stock: {{ producto.cantidad }} {{ producto.unidad_medida }}
-            {% endif %}
-          </p>
-        </div>
-      </div>
-    </div>
-  {% empty %}
-    <p class="text-center text-muted">No hay productos disponibles en esta categoría.</p>
-  {% endfor %}
+<div class="mb-4 text-start">
+  <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
+    ← Volver a Categorías
+  </a>
 </div>
 
+{% if productos %}
+  <div class="row">
+    {% for producto in productos %}
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm border-0 text-center">
+          {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}" style="height:200px; object-fit:cover;">
+          {% else %}
+            <img src="{% static 'img/default-product.png' %}" class="card-img-top" alt="Sin imagen" style="height:200px; object-fit:cover;">
+          {% endif %}
+
+          <div class="card-body">
+            <h5 class="card-title">{{ producto.nombre }}</h5>
+            <p class="card-text text-muted">
+              Precio: <strong>{{ producto.precio_venta }} Bs.</strong><br>
+              {% if es_gerente %}
+                Stock: {{ producto.cantidad }} {{ producto.unidad_medida }}
+              {% endif %}
+            </p>
+
+            {% if producto.cantidad > 0 %}
+              <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-success btn-sm mt-2">
+                  🛒 Agregar al carrito
+                </button>
+              </form>
+            {% else %}
+              <span class="badge bg-secondary mt-2">Sin stock</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-center text-muted">No hay productos disponibles en esta categoría.</p>
+{% endif %}
+
 <div class="mt-4 text-center">
-  <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary">
-    ← Volver a Productos
+  <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary btn-sm">
+    ← Volver a Categorías
   </a>
 </div>
 {% endblock %}

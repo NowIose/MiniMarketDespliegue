@@ -1,9 +1,11 @@
 from django.contrib import admin
-from Ventas.models import MetodoPago, Venta, DetalleVenta, Devolucion, DetalleDevolucion
-
+from Ventas.models import MetodoPago, Venta, DetalleVenta, Devolucion, DetalleDevolucion,Carrito,ItemCarrito
 # Register your models here.
 admin.site.register(MetodoPago)
 admin.site.register(Venta)
 admin.site.register(DetalleVenta)
 admin.site.register(Devolucion)
 admin.site.register(DetalleDevolucion)
+admin.site.register(Carrito)
+admin.site.register(ItemCarrito)
+

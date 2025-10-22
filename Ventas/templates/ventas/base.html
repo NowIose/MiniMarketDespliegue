@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Ventas{% endblock %}
+
+{% block content %}
+<style>
+  /* 🎨 Fondo con degradado morado */
+  body {
+    background: linear-gradient(135deg, #7b2ff7, #f107a3);
+    background-attachment: fixed;
+    color: #2c2c2c;
+  }
+
+  /* 🧱 Contenedor con tarjeta translúcida */
+  .ventas-container {
+    background-color: rgba(255, 255, 255, 0.93);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-top: 40px;
+    animation: fadeIn 0.8s ease-in-out;
+  }
+
+  /* ✨ Efecto de aparición suave */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 💜 Botones morados */
+  .btn-morado {
+    background: linear-gradient(135deg, #7b2ff7, #f107a3);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+  }
+  .btn-morado:hover {
+    background: linear-gradient(135deg, #f107a3, #7b2ff7);
+    transform: scale(1.05);
+  }
+
+  /* 🔄 Botón volver */
+  .volver-btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    color: white;
+    backdrop-filter: blur(3px);
+    transition: 0.3s;
+  }
+  .volver-btn:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+    color: white;
+  }
+
+  /* 🛍️ Títulos */
+  h2, h3, h4 {
+    color: #5e2ca5;
+    font-weight: 700;
+  }
+</style>
+
+{# 🔹 Botón "Seguir comprando" solo dentro de ventas #}
+{% if request.path|slice:":8" == '/ventas/' and not request.path == '/ventas/' %}
+  <div class="container mt-3">
+    <a href="{% url 'listar_categorias' %}" class="btn volver-btn btn-sm">
+      ← Seguir comprando
+    </a>
+  </div>
+{% endif %}
+
+<div class="container ventas-container">
+  {% block ventas_content %}
+  <!-- Aquí irá el contenido específico de cada vista -->
+  {% endblock %}
+</div>
+
+{% endblock %}
