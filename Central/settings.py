@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,18 +23,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cydu2e)kumbx9)!(is^+%63re*)n%v7%-0(x8yevwg)eq4^gg-'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-cydu2e)kumbx9)!(is^+%63re*)n%v7%-0(x8yevwg)eq4^gg-')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'Usuarios.apps.UsuariosConfig', #cambiada a 'Usuarios' por 'Usuarios.apps.UsuariosConfig' para que se carguen las señales
+    'Usuarios.apps.UsuariosConfig', # cambiada a 'Usuarios' por 'Usuarios.apps.UsuariosConfig' para que se carguen las señales
     'Productos',
     'Ventas',
     'Inventario',
@@ -41,39 +44,42 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'widget_tweaks',#estilos bootstrap en formularios
-
+    'widget_tweaks', # estilos bootstrap en formularios
 ]
 
 ###### MODELO DE USUARIO PERSONALIZADO
-AUTH_USER_MODEL = 'Usuarios.Usuario'   #IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJNAGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
+AUTH_USER_MODEL = 'Usuarios.Usuario'   # IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJANGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
 ##############################
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/categorias/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
-#ACTIVAR PARA DESARROLLO
-#EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ============================================================
+# 📧 CONFIGURACIÓN DE EMAIL (Desarrollo / Producción)
+# ============================================================
+# En local puedes usar consola (imprime el correo en terminal)
+# En producción (Render) se usa Gmail u otro SMTP
+
+if config('USE_CONSOLE_EMAIL', default=False, cast=bool):
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='dainerdual@gmail.com')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='uzdk jbal dmgu yqjm')
+    DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-
-############################################################################
-# --- 📧 Configuración de envío real con Gmail PRODUCCION ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-# 🔑 Usa tu correo y una "App Password" (no tu contraseña normal)
-EMAIL_HOST_USER = 'dainerdual@gmail.com'
-EMAIL_HOST_PASSWORD = 'uzdk jbal dmgu yqjm'
-
-# 📬 Remitente por defecto
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-#############################################################################
+# ============================================================
+# MIDDLEWARE
+# ============================================================
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Permite servir archivos estáticos en Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,40 +109,55 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Central.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# ============================================================
+# BASE DE DATOS
+# ============================================================
+# En desarrollo se usa PostgreSQL local
+# En Render se configura automáticamente mediante DATABASE_URL
+# ============================================================
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_market',
-        'USER': 'postgres',
-        'PASSWORD': '2077',
-        'HOST': 'localhost',   # en minúsculas, no "LOCALHOST"
-        'PORT': '5432',
+if config('RENDER', default=False, cast=bool):
+    # 🚀 Configuración automática para Render
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    # 🧑‍💻 Config local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='db_market'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='2077'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    #{
-    ##    'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', #segurudad extra contraseñas
-    #},
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    # },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {
             'min_length': 3,  # Puedes ajustar la longitud mínima según tus necesidades
         }
     },
-    #{
-     #   'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-     #},
-    #{
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    # },
+    # {
     #     'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-   # },
+    # },
 ]
 
 
@@ -152,20 +173,23 @@ USE_I18N = True
 USE_TZ = True
 
 
+# ============================================================
+# ARCHIVOS ESTÁTICOS Y MULTIMEDIA
+# ============================================================
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
+
+# Archivos multimedia (imágenes de productos)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = config('MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# Configuración para archivos multimedia (imágenes de productos)NUEVO
-
-import os
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
