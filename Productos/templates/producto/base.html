@@ -52,7 +52,72 @@
         justify-content: center;
       }
     </style>
+    <input type="text" id="buscador" placeholder="Buscar producto..." class="form-control">
+    {% if user.is_authenticated %}
+    <div class="container mt-3">
+      <input 
+          type="text" 
+          id="buscador" 
+          class="form-control" 
+          placeholder="🔍 Buscar producto..." 
+          autocomplete="off">
+      <div id="resultados" class="list-group mt-1"></div>
+    </div>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const buscador = document.getElementById('buscador');
+        const resultados = document.getElementById('resultados');
+
+        // Evitar error si el input no está presente
+        if (!buscador || !resultados) return;
+
+        buscador.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            if (query.length < 1) {
+                resultados.innerHTML = '';
+                return;
+            }
+
+            // URL correcta con el prefijo /productos/
+            fetch(`/productos/buscar/?q=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    resultados.innerHTML = '';
+                    if (data.length === 0) {
+                        resultados.innerHTML = `
+                            <div class="list-group-item text-muted">
+                                Sin resultados para "${query}"
+                            </div>`;
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const enlace = document.createElement('a');
+                        enlace.href = `/productos/producto/${item.id}/`;
+                        enlace.classList.add('list-group-item', 'list-group-item-action');
+                        enlace.textContent = `${item.nombre} — ${item.precio} Bs.`;
+                        resultados.appendChild(enlace);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al buscar producto:', error);
+                    resultados.innerHTML = `
+                        <div class="list-group-item text-danger">
+                            Error al conectar con el servidor
+                        </div>`;
+                });
+        });
+    });
+    </script>
+    {% endif %}
+    <div id="resultados" class="list-group mt-1"></div>
     <a href="{% url 'ver_carrito' %}" class="carrito-flotante" title="Ver carrito">
       <i class="bi bi-cart-fill fs-4"></i>
       {% with carrito=user.carrito.first %}

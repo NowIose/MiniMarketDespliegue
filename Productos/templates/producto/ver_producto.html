@@ -1,0 +1,33 @@
+{% extends "producto/base.html" %}
+{% load static %}
+{% block producto_content %}
+<div class="container mt-4">
+    <div class="card shadow-lg p-4 text-center">
+        <h2 class="mb-3">{{ producto.nombre }}</h2>
+
+        {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" class="img-fluid mx-auto d-block mb-3" alt="{{ producto.nombre }}" style="max-height: 300px; object-fit: cover;">
+        {% else %}
+            <img src="{% static 'img/default-product.png' %}" class="img-fluid mx-auto d-block mb-3" alt="Sin imagen" style="max-height: 300px; object-fit: cover;">
+        {% endif %}
+
+        <p><strong>Precio:</strong> {{ producto.precio_venta }} Bs.</p>
+        <p><strong>Cantidad disponible:</strong> {{ producto.cantidad }} {{ producto.unidad_medida }}</p>
+
+        {% if producto.cantidad > 0 %}
+            <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn btn-success mt-3">
+                🛒 Agregar al carrito
+            </a>
+        {% else %}
+            <span class="badge bg-secondary mt-3">Sin stock</span>
+        {% endif %}
+
+        {% if request.user.is_authenticated and request.user.es_gerente %}
+            <a href="{% url 'editar_producto' producto.id %}" class="btn btn-warning btn-sm mt-2">✏️ Editar</a>
+        {% endif %}       
+        <div class="mt-4">
+            <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary">⬅ Volver</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

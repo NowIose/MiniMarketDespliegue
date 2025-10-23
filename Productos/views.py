@@ -1,15 +1,13 @@
 from django.shortcuts import render, get_object_or_404
 
 # Create your views here.
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Producto, Categoria
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import CategoriaForm, ProductoForm 
 
-
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-
 
 # '''@login_required
 # def ver_productos(request):
@@ -216,3 +214,26 @@ def editar_producto(request, producto_id):
         form = ProductoForm(instance=producto)
 
     return render(request, 'producto/editar_producto.html', {'form': form, 'producto': producto})
+
+
+
+@login_required
+def buscar_producto(request):
+    query = request.GET.get('q', '')  # Obtener lo que el usuario escribe
+    resultados = []
+
+    if query:
+        productos = Producto.objects.filter(nombre__icontains=query)[:10]  # Limitar a 10 resultados
+        for p in productos:
+            resultados.append({
+                'id': p.id,
+                'nombre': p.nombre,
+                'precio': str(p.precio_venta),
+            })
+
+    return JsonResponse(resultados, safe=False)
+
+@login_required
+def ver_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+    return render(request, 'producto/ver_producto.html', {'producto': producto})
