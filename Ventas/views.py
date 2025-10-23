@@ -74,3 +74,72 @@ def vaciar_carrito(request):
     carrito.items.all().delete()
     messages.info(request, "Se vació tu carrito.")
     return redirect('ver_carrito')
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from io import BytesIO
+import qrcode, base64
+from Usuarios.models import Cliente, Empleado, CargoLaboral
+from Ventas.models import Carrito, DetalleVenta, MetodoPago, Venta
+#from Notificaciones.models import Notificacion  # opcional si usas tabla Notificacion
+
+@login_required
+def pago_qr(request):
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    items = carrito.items.select_related('producto')
+    total = carrito.total()
+
+    # Crear cliente si no existe
+    cliente, creado = Cliente.objects.get_or_create(usuario=request.user)
+
+    # Cajeros activos
+    cargo_cajero = CargoLaboral.objects.filter(cargo__iexact="Cajero").first()
+    cajeros = Empleado.objects.filter(estado=True, cargo=cargo_cajero)
+
+    if request.method == "POST":
+        id_cajero = request.POST.get("cajero")
+
+        # ✅ Manejo de empleado según tipo de usuario
+        try:
+            empleado = Empleado.objects.get(usuario_id=request.user.id)
+        except Empleado.DoesNotExist:
+            empleado = Empleado.objects.get(usuario_id=id_cajero)
+
+        # Generar QR
+        datos_pago = f"Pago de {total} Bs. por {request.user.username} - Supermercado XYZ (Cajero: {empleado.usuario.username})"
+        qr = qrcode.make(datos_pago)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        # Crear venta
+        metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="Pago QR")
+
+        venta = Venta.objects.create(
+            id_cliente=cliente,
+            id_empleado=empleado,
+            id_pago=metodo_pago,
+            descuento=0
+        )
+
+        for item in items:
+            DetalleVenta.objects.create(
+                id_venta=venta,
+                id_producto=item.producto,
+                cantidad=item.cantidad
+            )
+
+        carrito.items.all().delete()
+
+        return render(request, "ventas/pago_qr.html", {
+            "qr_base64": qr_base64,
+            "total": total,
+            "cajero": empleado,
+            "nuevo_cliente": creado
+        })
+
+    # Vista GET
+    return render(request, "ventas/seleccionar_cajero.html", {
+        "cajeros": cajeros,
+        "total": total
+    })

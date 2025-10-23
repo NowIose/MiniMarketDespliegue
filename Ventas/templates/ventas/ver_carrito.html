@@ -57,7 +57,9 @@
 
     <div class="text-end mt-3">
       <h4>Total: <strong>{{ total }} Bs.</strong></h4>
-      <a href="#" class="btn btn-success mt-2">💳 Proceder al pago</a>
+      <form method="get" action="{% url 'pago_qr' %}">
+        <button type="submit" class="btn btn-success mt-2">💳 Proceder al pago</button>
+      </form>
     </div>
 
   {% else %}

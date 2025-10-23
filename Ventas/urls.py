@@ -8,5 +8,6 @@ urlpatterns = [
     path('carrito/actualizar/<int:item_id>/<str:accion>/', views.actualizar_cantidad, name='actualizar_cantidad'),
     path('carrito/eliminar/<int:item_id>/', views.eliminar_item, name='eliminar_item'),
     path('carrito/vaciar/', views.vaciar_carrito, name='vaciar_carrito'),
+    path('carrito/pago/', views.pago_qr, name='pago_qr'),
 ]
     # Otras rutas de Ventas pueden ir aquí

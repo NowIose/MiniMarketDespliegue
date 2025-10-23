@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Pago por QR{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <h3 class="mb-3">✅ Pago con QR</h3>
+  <p class="text-muted">Cajero: <strong>{{ cajero.usuario.username }}</strong></p>
+  <p>Total pagado: <strong>{{ total }} Bs.</strong></p>
+
+  <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR de Pago" class="img-fluid mt-3" style="max-width:300px;">
+
+  {% if nuevo_cliente %}
+    <p class="mt-4 text-success">🎉 ¡Bienvenido! Se te ha registrado como nuevo cliente.</p>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'listar_categorias' %}" class="btn btn-primary">🏪 Volver a Productos</a>
+  </div>
+</div>
+{% endblock %}
