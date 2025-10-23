@@ -8,6 +8,7 @@ from django.contrib import messages
 from Productos.models import Producto
 from .models import Carrito, ItemCarrito
 
+
 ## Agregar al carrito REVISAR IA
 @login_required
 def agregar_al_carrito(request, producto_id):

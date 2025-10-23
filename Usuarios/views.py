@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm  #auntenticacion
 from .forms import CustomUserCreationForm                 #importamos de forms.py
 
 
-
+from .utils import registrar_bitacora  # Importa la función para registrar en la bitácora NUEVO
 
 from .forms import CustomUserCreationForm #Importa el formulario personalizado esto de forms.py
 
@@ -108,6 +108,8 @@ def signup(request):
 
             login(request, user)  # inicia sesión automáticamente
             messages.success(request, f"Usuario {user.username} creado y logueado!")
+             # Registrar en la bitácora  NUEVO
+            registrar_bitacora(request.user, request, f"Registró un nuevo usuario: {user.username}.") 
             return redirect('home')
         else:
             # Debug: mostrar errores del formulario
@@ -170,6 +172,7 @@ def asignar_empleado(request, usuario_id):
             empleado.estado = False
             empleado.save()
             messages.success(request, f"{usuario.username} fue asignado como {empleado.cargo} con sueldo {empleado.sueldo}.")
+            registrar_bitacora(request.user, request, f"Asignó al usuario '{usuario.username}' como empleado '{empleado.cargo.cargo}'")
             return redirect('ver_empleados')
     else:
         form = AsignarEmpleadoForm()
@@ -209,6 +212,11 @@ def completar_registro_empleado(request):
                 empleado.fecha_contratacion = now().date()
             empleado.save()
             messages.success(request, "Registro completado correctamente.")
+
+            
+            # ✅ Registrar en bitácora
+            registrar_bitacora(request.user, request, "Completó su registro como empleado.")
+
             return redirect('home')
         else:
             print("Errores del form:", form.errors)

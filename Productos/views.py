@@ -33,7 +33,7 @@ from django.contrib.auth.decorators import login_required
 from Usuarios.decorators import cargo_requerido # Importar para ya no usar es_gerente
 
 
-
+from Usuarios.utils import registrar_bitacora # Importar la función de bitácora 
 
 # Función para verificar si el usuario es gerente
 def es_gerente(user):
@@ -83,6 +83,7 @@ def crear_categoria(request):
         form = CategoriaForm(request.POST)
         if form.is_valid():
             form.save()
+            registrar_bitacora(request.user, request, f"Creó la categoría '{Categoria.nombre}'.")
             return redirect('listar_categorias')
     else:
         form = CategoriaForm()
@@ -126,6 +127,7 @@ def crear_subcategoria(request, categoria_id):
         if nombre:
             Categoria.objects.create(nombre=nombre, categoria_padre=categoria_padre)
             messages.success(request, f"Subcategoría '{nombre}' agregada correctamente.")
+            registrar_bitacora(request.user, request, f"Creó la subcategoría '{nombre}' dentro de '{categoria_padre.nombre}'.")
             return redirect('ver_categoria', categoria_id=categoria_padre.id)
     return render(request, 'producto/crear_subcategoria.html', {'categoria_padre': categoria_padre})
 
@@ -176,6 +178,7 @@ def crear_producto(request, categoria_id):
                 imagen=imagen  # PARA ASIGNAR IMAGEN
             )
             messages.success(request, f"Producto '{nombre}' agregado correctamente.")
+            registrar_bitacora(request.user, request, f"Creó el producto '{nombre}' en la categoría '{categoria.nombre}'.")
             return redirect('ver_categoria', categoria_id=categoria.id)
 
     return render(request, 'producto/crear_producto.html', {'categoria': categoria})
@@ -209,7 +212,9 @@ def editar_producto(request, producto_id):
         if form.is_valid():
             form.save()
             messages.success(request, f"Producto '{producto.nombre}' actualizado correctamente.")
+            registrar_bitacora(request.user, request, f"Actualizó el producto '{producto.nombre}'.")
             return redirect('ver_categoria', categoria_id=producto.categoria.id)
+            
     else:
         form = ProductoForm(instance=producto)
 

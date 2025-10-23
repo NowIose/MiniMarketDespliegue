@@ -85,7 +85,7 @@ class Bitacora(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE,null=False)
     ip = models.CharField(max_length=45,null=False)  # Soporta IPv6
     fecha = models.DateTimeField(auto_now_add=True, null=False)
-    descripcion = models.CharField(max_length=100,null=False)
+    descripcion = models.TextField(null=False)
 
     def __str__(self):
         return f"Bitácora: {self.usuario.username} - {self.fecha} - {self.descripcion}"

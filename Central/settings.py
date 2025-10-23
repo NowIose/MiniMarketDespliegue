@@ -52,8 +52,25 @@ LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/categorias/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+#ACTIVAR PARA DESARROLLO
+#EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+
+
+############################################################################
+# --- 📧 Configuración de envío real con Gmail PRODUCCION ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# 🔑 Usa tu correo y una "App Password" (no tu contraseña normal)
+EMAIL_HOST_USER = 'dainerdual@gmail.com'
+EMAIL_HOST_PASSWORD = 'uzdk jbal dmgu yqjm'
+
+# 📬 Remitente por defecto
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+#############################################################################
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,7 +111,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_market',
         'USER': 'postgres',
-        'PASSWORD': 'gabo2004',
+        'PASSWORD': '2077',
         'HOST': 'localhost',   # en minúsculas, no "LOCALHOST"
         'PORT': '5432',
     }
