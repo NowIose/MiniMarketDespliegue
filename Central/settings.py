@@ -173,23 +173,40 @@ USE_I18N = True
 USE_TZ = True
 
 
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 # ============================================================
 # ARCHIVOS ESTÁTICOS Y MULTIMEDIA
 # ============================================================
 
-# Static files (CSS, JavaScript, Images)
+# Archivos estáticos (CSS, JS, imágenes de la app)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
 
-# Archivos multimedia (imágenes de productos)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = config('MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
+# ============================================================
+# 🌩️ CLOUDINARY PARA ARCHIVOS MULTIMEDIA (imágenes de productos)
+# ============================================================
+
+INSTALLED_APPS += [
+    'cloudinary',
+    'cloudinary_storage',
+]
+
+# Almacenamiento de archivos multimedia en Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
+
+# Si deseas seguir usando MEDIA_ROOT localmente (solo en modo desarrollo)
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ============================================================
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+# ============================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
