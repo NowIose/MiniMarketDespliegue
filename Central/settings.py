@@ -182,31 +182,22 @@ USE_TZ = True
 
 # Archivos estáticos (CSS, JS, imágenes de la app)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ============================================================
+# ARCHIVOS ESTÁTICOS Y MULTIMEDIA (Render + Cloudinary)
+# ============================================================
+
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
-# ============================================================
-# 🌩️ CLOUDINARY PARA ARCHIVOS MULTIMEDIA (imágenes de productos)
-# ============================================================
-
+# Cloudinary para imágenes y multimedia
 INSTALLED_APPS += [
     'cloudinary',
     'cloudinary_storage',
 ]
 
-# Almacenamiento de archivos multimedia en Cloudinary
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
-
-# Si deseas seguir usando MEDIA_ROOT localmente (solo en modo desarrollo)
-if DEBUG:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# ============================================================
-# Default primary key field type
-# ============================================================
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # no se usará en Render, pero no molesta
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
