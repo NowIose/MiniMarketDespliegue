@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-cydu2e)kumbx9)!(is^+%63re*)n%v7%-0(x8yevwg)eq4^gg-')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
@@ -183,21 +183,49 @@ USE_TZ = True
 # Archivos estáticos (CSS, JS, imágenes de la app)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 # ============================================================
-# ARCHIVOS ESTÁTICOS Y MULTIMEDIA (Render + Cloudinary)
+# ============================================================
+# 📦 ARCHIVOS ESTÁTICOS Y MULTIMEDIA
 # ============================================================
 
+# Archivos estáticos (CSS, JS, imágenes locales del proyecto)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Cloudinary para imágenes y multimedia
+# ============================================================
+# 🌩️ CLOUDINARY PARA ARCHIVOS MULTIMEDIA (imágenes de productos)
+# ============================================================
+
 INSTALLED_APPS += [
     'cloudinary',
     'cloudinary_storage',
 ]
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+from decouple import config
+
+# Configuración de Cloudinary (usa variables de entorno de Render)
+cloudinary.config( 
+    cloud_name = config('CLOUDINARY_CLOUD_NAME'),
+    api_key = config('CLOUDINARY_API_KEY'),
+    api_secret = config('CLOUDINARY_API_SECRET'),
+    secure = True
+)
+
+# Django usará Cloudinary como almacenamiento por defecto
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# MEDIA_URL se mantiene para compatibilidad (pero apunta a Cloudinary)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # no se usará en Render, pero no molesta
+
+# MEDIA_ROOT solo se usa en local (para desarrollo)
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ============================================================
+# ⚙️ DEFAULT PRIMARY KEY FIELD
+# ============================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
