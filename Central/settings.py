@@ -56,7 +56,7 @@ LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
 
 # ============================================================
-# 📧 CONFIGURACIÓN DE EMAIL (Desarrollo / Producción)
+#  CONFIGURACIÓN DE EMAIL (Desarrollo / Producción)
 # ============================================================
 # En local puedes usar consola (imprime el correo en terminal)
 # En producción (Render) se usa Gmail u otro SMTP
@@ -126,7 +126,7 @@ if config('RENDER', default=False, cast=bool):
         )
     }
 else:
-    # 🧑‍💻 Config local
+    #  Config local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -184,7 +184,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 # ============================================================
 # ============================================================
-# 📦 ARCHIVOS ESTÁTICOS Y MULTIMEDIA
+#  ARCHIVOS ESTÁTICOS Y MULTIMEDIA
 # ============================================================
 
 # Archivos estáticos (CSS, JS, imágenes locales del proyecto)
@@ -193,7 +193,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ============================================================
-# 🌩️ CLOUDINARY PARA ARCHIVOS MULTIMEDIA (imágenes de productos)
+#  CLOUDINARY PARA ARCHIVOS MULTIMEDIA (imágenes de productos)
 # ============================================================
 
 INSTALLED_APPS += [
@@ -225,7 +225,7 @@ if DEBUG:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ============================================================
-# ⚙️ DEFAULT PRIMARY KEY FIELD
+#  DEFAULT PRIMARY KEY FIELD
 # ============================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
