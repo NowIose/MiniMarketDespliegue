@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-cydu2e)kumbx9)!(is^+%63re*)n%v7%-0(x8yevwg)eq4^gg-')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
@@ -215,15 +215,20 @@ cloudinary.config(
 )
 
 # Django usará Cloudinary como almacenamiento por defecto
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage' #come tado para arreglar imagenes
+if config('USE_CLOUDINARY', default=False, cast=bool):
+    # Si la variable de entorno USE_CLOUDINARY es True (ej. en Render)
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    # Si estamos en desarrollo local
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 # MEDIA_URL se mantiene para compatibilidad (pero apunta a Cloudinary)
 MEDIA_URL = '/media/'
 
 # MEDIA_ROOT solo se usa en local (para desarrollo)
-if DEBUG:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+#if DEBUG:
+ #   MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR /'media'
 # ============================================================
 #  DEFAULT PRIMARY KEY FIELD
 # ============================================================
