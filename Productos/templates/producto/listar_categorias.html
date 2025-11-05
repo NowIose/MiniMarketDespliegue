@@ -5,14 +5,31 @@
 <div class="container mt-5">
   <h2 class="text-center mb-4">Categorías principales</h2>
 
-  {% if request.user.is_authenticated and request.user.empleado.cargo.cargo == "Gerente" %}
-    <div class="text-end mb-3">
-      <a href="{% url 'crear_categoria' %}" class="btn btn-primary">+ Crear categoría</a>
-      <a href="{% url 'inventario:lista_retiros' %}" class="btn btn-outline-danger btn-sm">
-      📦 Ver Retiros
-    </a>
-    </div>
-  {% endif %}
+{% if request.user.is_authenticated and request.user.empleado %}
+    {% if request.user.empleado.cargo.cargo == "Gerente" or request.user.empleado.cargo.cargo == "Encargado de Suministros" %}
+        <div class="text-end mb-3 d-flex justify-content-end gap-2 flex-wrap">
+            <a href="{% url 'inventario:nuevo_suministro' %}" class="btn btn-success btn-sm d-flex align-items-center">
+                📦 <span class="ms-1">Solicitar Suministro</span>
+            </a>
+
+            {% if request.user.empleado.cargo.cargo == "Gerente" %}
+                <a href="{% url 'crear_categoria' %}" class="btn btn-primary btn-sm d-flex align-items-center">
+                    ➕ <span class="ms-1">Crear categoría</span>
+                </a>
+            {% endif %}
+
+            <a href="{% url 'inventario:lista_retiros' %}" class="btn btn-outline-danger btn-sm d-flex align-items-center">
+                📦 <span class="ms-1">Ver Retiros</span>
+            </a>
+            <a href="{% url 'inventario:lista_suministros' %}" class="btn btn-outline-info btn-sm d-flex align-items-center">
+    📋 <span class="ms-1">Ver Suministros</span>
+</a>
+
+        </div>
+    {% endif %}
+{% endif %}
+
+
 
   <div class="row">
     {% for categoria in categorias %}
