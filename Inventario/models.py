@@ -2,6 +2,7 @@ from django.db import models
 from Productos.models import Producto
 from Usuarios.models import Empleado
 from django.utils import timezone
+from decimal import Decimal
 
 # Create your models here.
 
@@ -25,16 +26,30 @@ class Administra(models.Model):
         return f"{self.empleado} administra {self.almacen}"
 
 
-class Retiro(models.Model):
+'''class Retiro(models.Model):
     fecha = models.DateField()
 
     def __str__(self):
-        return f"Retiro {self.id} - {self.fecha}"
+        return f"Retiro {self.id} - {self.fecha}"'''
+class Retiro(models.Model):
+    AUTOMATICO = 'AUTO'
+    MANUAL = 'MAN'
+    TIPO_CHOICES = [
+        (AUTOMATICO, 'Automático'),
+        (MANUAL, 'Manual'),
+    ]
+
+    empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True, blank=True)
+    fecha = models.DateField(default=timezone.now)
+    tipo = models.CharField(max_length=5, choices=TIPO_CHOICES, default=MANUAL)
+
+    def __str__(self):
+        return f"Retiro {self.id} - {self.get_tipo_display()} ({self.fecha})"
 
 
 class DetalleRetiro(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    retiro = models.ForeignKey(Retiro, on_delete=models.CASCADE)
+    retiro = models.ForeignKey(Retiro, on_delete=models.CASCADE,related_name='detalles')
     cantidad = models.DecimalField(max_digits=10, decimal_places=2)
     motivo = models.CharField(max_length=100)
 
@@ -56,15 +71,37 @@ class Proveedor(models.Model):
 
 
 class Suministro(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    nro_suministro = models.AutoField(primary_key=True)
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
-    almacen = models.ForeignKey(Almacen, on_delete=models.CASCADE)
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE)
-    fecha_ven = models.DateField()  # vencimiento
-    fecha_com = models.DateField()  # compra
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
-    precio_com = models.DecimalField(max_digits=10, decimal_places=2)
-    estado = models.BooleanField()
+    fecha_com = models.DateField(default=timezone.now)
+    total_com = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
 
     def __str__(self):
-        return f"Suministro {self.producto} de {self.proveedor} ({self.cantidad} unidades)"
+        return f"Suministro N°{self.nro_suministro} - {self.proveedor.nombre_empresa}"
+
+    def calcular_total(self):
+        total = sum(detalle.subtotal() for detalle in self.detalles.all())
+        self.total_com = total
+        self.save()
+
+
+class DetalleSuministro(models.Model):
+    suministro = models.ForeignKey(Suministro, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_com = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_ven = models.DateField()
+    estado = models.BooleanField(default=True)
+
+    def subtotal(self):
+        return self.cantidad * self.precio_com
+
+    def __str__(self):
+        return f"{self.producto.nombre} ({self.cantidad} {self.producto.unidad_medida})"
+
+    def save(self, *args, **kwargs):
+        """Actualiza stock automáticamente al guardar."""
+        super().save(*args, **kwargs)
+        self.producto.cantidad += self.cantidad
+        self.producto.save()

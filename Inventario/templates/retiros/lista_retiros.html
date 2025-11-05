@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Retiros{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">📦 Últimos Retiros</h2>
+
+    {% if retiros %}
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-striped align-middle text-center">
+                <thead class="table-primary">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Empleado</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for retiro in retiros %}
+                        <tr>
+                            <td>{{ retiro.id }}</td>
+                            <td>{{ retiro.fecha|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if retiro.tipo == "MAN" %}
+                                    <span class="badge bg-success">Manual</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Automático</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if retiro.empleado %}
+                                    <strong>{{ retiro.empleado.usuario.username }}</strong><br>
+                                    CI: {{ retiro.empleado.ci }}<br>
+                                    <span class="text-muted">{{ retiro.empleado.cargo.cargo }}</span>
+                                {% else %}
+                                    <span class="text-muted">— Automático —</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-outline-info btn-sm" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#detalles{{ retiro.id }}">
+                                    Ver
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr class="collapse" id="detalles{{ retiro.id }}">
+                            <td colspan="5">
+                                <div class="card card-body text-start">
+                                    <strong>Productos retirados:</strong>
+                                    <ul class="mb-0">
+                                        {% for d in retiro.detalles.all %}
+                                            <li>
+                                                {{ d.producto.nombre }} —
+                                                {{ d.cantidad }} {{ d.producto.unidad_medida }}
+                                                ({{ d.motivo }})
+                                            </li>
+                                        {% empty %}
+                                            <li>No hay detalles disponibles.</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            No se han registrado retiros aún.
+        </div>
+    {% endif %}
+
+    {% if request.user.is_authenticated and request.user.empleado.cargo.cargo == "Gerente" %}
+        <div class="text-center mt-4">
+            <a href="{% url 'inventario:nuevo_retiro' %}" class="btn btn-primary btn-lg shadow-sm">
+                ➕ Hacer nuevo retiro
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
