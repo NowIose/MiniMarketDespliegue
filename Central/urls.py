@@ -20,6 +20,7 @@ from django.shortcuts import redirect
 from Usuarios import views as usuario_views
 from Productos import views as producto_views
 from Ventas import views as ventas_views
+from Reportes import views
 urlpatterns = [
     path('', usuario_views.login_view, name='home'),  #  raíz muestra el login
     path('admin/', admin.site.urls),
@@ -28,7 +29,7 @@ urlpatterns = [
     path('productos/', include('Productos.urls')),
     path('categorias/', producto_views.listar_categorias, name='listar_categorias'),
     path('ventas/', include('Ventas.urls')),
-
+    path('reportes/', include(('Reportes.urls', 'reportes'), namespace='reportes')),
 
 
 
