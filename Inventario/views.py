@@ -62,3 +62,33 @@ def lista_retiros(request):
     generar_retiros_automaticos()
     retiros = Retiro.objects.order_by('-fecha')[:10]
     return render(request, 'retiros/lista_retiros.html', {'retiros': retiros})
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Proveedor
+from .forms import ProveedorForm
+
+
+def lista_proveedores(request):
+    proveedores = Proveedor.objects.all()
+    return render(request, 'proveedores/listar_proveedores.html', {'proveedores':proveedores})
+
+def agregar_proveedor(request):
+    if request.method =='POST':
+        form = ProveedorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('inventario:listar_proveedores')
+    else:
+        form = ProveedorForm()
+    return render(request, 'proveedores/agregar_proveedor.html', {'form':form})
+
+def editar_proveedor(request, pk):
+    proveedor= get_object_or_404(Proveedor, pk=pk)
+    if request.method == 'POST':
+        form = ProveedorForm(request.POST, instance=proveedor)
+        if form.is_valid():
+            form.save()
+            return redirect('inventario:listar_proveedores')
+    else:
+        form = ProveedorForm(instance=proveedor)
+    return render(request, 'proveedores/editar_proveedor.html', {'form':form})

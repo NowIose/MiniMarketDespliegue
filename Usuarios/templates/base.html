@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}MiniMarket{% endblock %}</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -54,6 +53,7 @@
                                         <li><a class="dropdown-item" href="{% url 'ver_clientes' %}">Clientes</a></li>
                                         <li><a class="dropdown-item" href="{% url 'ver_empleados' %}">Empleados</a></li>
                                         <li><a class="dropdown-item" href="{% url 'ver_bitacora' %}">Bitácora</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'inventario:listar_proveedores' %}">Proveedores</a></li>
                                     </ul>
                                 </li>
 
@@ -65,6 +65,17 @@
                                             <span class="badge bg-warning text-dark">{{ notificaciones_cajero }}</span>
                                         {% endif %}
                                     </a>
+                                </li>
+
+                            {% elif user.empleado.cargo.cargo == "Encargado de Almacen" %}
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="almacenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Panel Encargado de Almacén
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="almacenDropdown">
+                                        <li><a class="dropdown-item" href="{% url 'ver_productos' %}">Productos</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'inventario:listar_proveedores' %}">Proveedores</a></li>
+                                    </ul>
                                 </li>
 
                             {% else %}
@@ -93,7 +104,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'signup' %}">Registrarse</a>
                         </li>
-                    {% endif %}    
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -120,7 +131,6 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
