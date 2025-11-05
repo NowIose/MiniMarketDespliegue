@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Detalle de Reserva #{{ reserva.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>🧾 Detalle de la Reserva #{{ reserva.id }}</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Cliente:</strong> {{ reserva.cliente.usuario.username }}</p>
+            <p><strong>Cajero:</strong> {{ reserva.cajero.usuario.username }}</p>
+            <p><strong>Fecha:</strong> {{ reserva.fecha|date:"d/m/Y H:i" }}</p>
+            <p><strong>Estado:</strong> 
+                {% if reserva.estado == "Pendiente" %}
+                    <span class="badge bg-warning text-dark">{{ reserva.estado }}</span>
+                {% elif reserva.estado == "Confirmada" %}
+                    <span class="badge bg-success">{{ reserva.estado }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ reserva.estado }}</span>
+                {% endif %}
+            </p>
+            <p><strong>Total:</strong> {{ reserva.total }} Bs</p>
+        </div>
+    </div>
+
+    <h4>🛒 Productos reservados</h4>
+    {% if detalles %}
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for det in detalles %}
+                <tr>
+                    <td>{{ det.producto.nombre }}</td>
+                    <td>{{ det.cantidad }}</td>
+                    <td>{{ det.producto.precio_venta }} Bs</td>
+                    <td>{{ det.subtotal }} Bs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay productos asociados a esta reserva.</p>
+    {% endif %}
+
+    {% if reserva.estado == "Pendiente" %}
+        <form method="post" action="{% url 'confirmar_reserva' reserva.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success mt-3">
+                ✅ Confirmar Reserva
+            </button>
+        </form>
+    {% endif %}
+
+    <a href="{% url 'cajero_reservas' %}" class="btn btn-secondary mt-3">⬅ Volver a Reservas</a>
+</div>
+{% endblock %}

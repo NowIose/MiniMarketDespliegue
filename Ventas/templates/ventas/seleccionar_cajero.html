@@ -18,8 +18,16 @@
     </div>
 
     <div class="text-center mt-4">
-      <p class="fw-bold">Total a pagar: {{ total }} Bs.</p>
-      <button type="submit" class="btn btn-success">Generar Pago QR</button>
+          <p class="fw-bold">Total a pagar: {{ total }} Bs.</p>
+          <div class="mb-3">
+        <label class="form-label">Seleccione método:</label>
+        <select name="metodo" class="form-select" required>
+            <option value="qr">Pago QR</option>
+            <option value="reserva">Reserva</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Continuar</button>
     </div>
   </form>
 

@@ -9,5 +9,14 @@ urlpatterns = [
     path('carrito/eliminar/<int:item_id>/', views.eliminar_item, name='eliminar_item'),
     path('carrito/vaciar/', views.vaciar_carrito, name='vaciar_carrito'),
     path('carrito/pago/', views.pago_qr, name='pago_qr'),
+    
+
+    path("cajero/reservas/", views.cajero_reservas, name="cajero_reservas"),
+    path("cajero/reservas/<int:reserva_id>/", views.cajero_reserva_detalle, name="cajero_reserva_detalle"),
+    path("cajero/reservas/<int:reserva_id>/confirmar/", views.confirmar_reserva, name="confirmar_reserva"),
+
+    path('mis_ventas/', views.mis_ventas, name='mis_ventas'),
+    path('detalle_venta/<int:venta_id>/', views.detalle_venta, name='detalle_venta'),
+
 ]
     # Otras rutas de Ventas pueden ir aquí

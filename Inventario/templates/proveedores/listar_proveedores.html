@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Proveedores{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Proveedores</h2>
+
+  <div class="text-end mb-3">
+    <a href="{% url 'inventario:agregar_proveedor' %}" class="btn btn-primary">Agregar Proveedor</a>
+  </div>
+
+  <div class="row">
+    {% for proveedor in proveedores %}
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title">{{ proveedor.nombre_empresa }}</h5>
+            <p class="card-text"><strong>Correo:</strong> {{ proveedor.correo }}</p>
+            <p class="card-text"><strong>Dirección:</strong> {{ proveedor.direccion }}</p>
+            <p class="card-text"><strong>Teléfono:</strong> {{ proveedor.telefono }}</p>
+            <a href="{% url 'inventario:editar_proveedor' proveedor.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center">
+        <p class="text-muted">No hay proveedores registrados.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

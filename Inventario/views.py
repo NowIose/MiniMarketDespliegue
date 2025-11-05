@@ -1,6 +1,9 @@
 from django.shortcuts import render
 
 # Create your views here.
+from django.shortcuts import render
+
+# Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,7 +12,6 @@ from Usuarios.models import Empleado
 from django.utils import timezone
 from decimal import Decimal
 from .utils import generar_retiros_automaticos
-
 
 from .models import Proveedor, Producto, Suministro, DetalleSuministro
 from Usuarios.models import Empleado
@@ -55,12 +57,44 @@ def nuevo_retiro(request):
     productos = Producto.objects.all()
     return render(request, 'retiros/nuevo_retiro.html', {'productos': productos})
 
+
+
 @login_required
 def lista_retiros(request):
 
     generar_retiros_automaticos()
     retiros = Retiro.objects.order_by('-fecha')[:10]
     return render(request, 'retiros/lista_retiros.html', {'retiros': retiros})
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Proveedor
+from .forms import ProveedorForm
+
+
+def lista_proveedores(request):
+    proveedores = Proveedor.objects.all()
+    return render(request, 'proveedores/listar_proveedores.html', {'proveedores':proveedores})
+
+def agregar_proveedor(request):
+    if request.method =='POST':
+        form = ProveedorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('inventario:listar_proveedores')
+    else:
+        form = ProveedorForm()
+    return render(request, 'proveedores/agregar_proveedor.html', {'form':form})
+
+def editar_proveedor(request, pk):
+    proveedor= get_object_or_404(Proveedor, pk=pk)
+    if request.method == 'POST':
+        form = ProveedorForm(request.POST, instance=proveedor)
+        if form.is_valid():
+            form.save()
+            return redirect('inventario:listar_proveedores')
+    else:
+        form = ProveedorForm(instance=proveedor)
+    return render(request, 'proveedores/editar_proveedor.html', {'form':form})
 
 from django.http import HttpResponse
 
