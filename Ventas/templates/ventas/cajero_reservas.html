@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Reservas del Cajero{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="mb-3">📦 Reservas Pendientes</h3>
+
+    {% if pendientes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in pendientes %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.cliente.usuario.username }}</td>
+                    <td>{{ r.total }} Bs</td>
+                    <td>{{ r.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'cajero_reserva_detalle' r.id %}" class="btn btn-primary btn-sm">
+                            Ver Detalles
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay reservas pendientes.</p>
+    {% endif %}
+
+
+    <hr class="my-4">
+
+
+    <h3 class="mb-3 text-success">✅ Reservas Confirmadas Hoy</h3>
+
+    {% if confirmadas %}
+        <table class="table table-bordered">
+            <thead class="table-success">
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Hora Confirmada</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in confirmadas %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.cliente.usuario.username }}</td>
+                    <td>{{ r.total }} Bs</td>
+                    <td>{{ r.fecha|date:"H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay reservas confirmadas hoy.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

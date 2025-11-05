@@ -223,4 +223,84 @@ def completar_registro_empleado(request):
     else:
         form = EmpleadoRegistroForm(instance=empleado)
 
-    return render(request, 'completar_empleado.html', {'form': form})
+    return render(request, 'completar_empleado.html', {'form': form}) 
+
+@login_required
+def cajero_reservas(request):
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    # ✅ Solo reservas pendientes y asignadas a este cajero
+    reservas = Reserva.objects.filter(cajero=cajero, estado="Pendiente").order_by("-fecha")
+
+    return render(request, "ventas/cajero_reservas.html", {
+        "reservas": reservas
+    })
+
+@login_required
+def cajero_reserva_detalle(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    # ✅ Seguridad: un cajero solo ve sus reservas
+    if reserva.cajero != cajero:
+        messages.error(request, "No tienes permiso para ver esta reserva.")
+        return redirect("cajero_reservas")
+
+    detalles = reserva.detalles.select_related("producto")
+
+    return render(request, "ventas/cajero_reserva_detalle.html", {
+        "reserva": reserva,
+        "detalles": detalles
+    })
+
+@login_required
+def confirmar_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    if reserva.cajero != cajero:
+        messages.error(request, "No tienes permiso para confirmar esta reserva.")
+        return redirect("cajero_reservas")
+
+    if reserva.estado != "Pendiente":
+        messages.warning(request, "La reserva ya fue procesada.")
+        return redirect("cajero_reservas")
+
+    # ✅ Crear venta
+    metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="Reserva Confirmada")
+
+    venta = Venta.objects.create(
+        id_cliente=reserva.cliente,
+        id_empleado=cajero,
+        id_pago=metodo_pago,
+        descuento=0
+    )
+
+    # ✅ Crear detalle de venta
+    for det in reserva.detalles.all():
+        DetalleVenta.objects.create(
+            id_venta=venta,
+            id_producto=det.producto,
+            cantidad=det.cantidad
+        )
+
+    # ✅ Cambiar estado
+    reserva.estado = "Confirmada"
+    reserva.save()
+
+    messages.success(request, f"Reserva #{reserva.id} confirmada correctamente.")
+    return redirect("cajero_reservas")

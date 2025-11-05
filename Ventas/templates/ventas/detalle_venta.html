@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Nota de Venta #{{ venta.id }}</h2>
+<p><strong>Fecha:</strong> {{ venta.fecha }}</p>
+<p><strong>Total:</strong> {{ venta.total_venta }} Bs</p>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Subtotal</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for det in detalles %}
+    <tr>
+      <td>{{ det.id_producto.nombre }}</td>
+      <td>{{ det.cantidad }}</td>
+      <td>{{ det.cantidad|floatformat:2|add:""|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

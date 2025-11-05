@@ -80,7 +80,7 @@ from django.contrib.auth.decorators import login_required
 from io import BytesIO
 import qrcode, base64
 from Usuarios.models import Cliente, Empleado, CargoLaboral
-from Ventas.models import Carrito, DetalleVenta, MetodoPago, Venta
+from Ventas.models import Carrito, DetalleVenta, MetodoPago, Venta,Reserva, DetalleReserva, Notificacion
 #from Notificaciones.models import Notificacion  # opcional si usas tabla Notificacion
 
 @login_required
@@ -89,30 +89,50 @@ def pago_qr(request):
     items = carrito.items.select_related('producto')
     total = carrito.total()
 
-    # Crear cliente si no existe
     cliente, creado = Cliente.objects.get_or_create(usuario=request.user)
 
-    # Cajeros activos
     cargo_cajero = CargoLaboral.objects.filter(cargo__iexact="Cajero").first()
     cajeros = Empleado.objects.filter(estado=True, cargo=cargo_cajero)
 
     if request.method == "POST":
         id_cajero = request.POST.get("cajero")
+        metodo = request.POST.get("metodo")
 
-        # ✅ Manejo de empleado según tipo de usuario
-        try:
-            empleado = Empleado.objects.get(usuario_id=request.user.id)
-        except Empleado.DoesNotExist:
-            empleado = Empleado.objects.get(usuario_id=id_cajero)
+        empleado = Empleado.objects.get(usuario_id=id_cajero)
 
-        # Generar QR
+        # ✅ OPCIÓN 1: Reserva
+        if metodo == "reserva":
+            reserva = Reserva.objects.create(
+                cliente=cliente,
+                cajero=empleado,
+                total=total,
+            )
+            Notificacion.objects.create(
+                cajero=empleado,
+                mensaje=f"Nuevo pedido de reserva del cliente {request.user.username}."
+            )
+            for item in items:
+                DetalleReserva.objects.create(
+                    reserva=reserva,
+                    producto=item.producto,
+                    cantidad=item.cantidad
+                )
+
+            carrito.items.all().delete()
+
+            return render(request, "ventas/reserva_confirmada.html", {
+                "reserva": reserva,
+                "cajero": empleado,
+                "total": total
+            })
+
+        # ✅ OPCIÓN 2: Pago QR (sin cambios)
         datos_pago = f"Pago de {total} Bs. por {request.user.username} - Supermercado XYZ (Cajero: {empleado.usuario.username})"
         qr = qrcode.make(datos_pago)
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         qr_base64 = base64.b64encode(buffer.getvalue()).decode()
 
-        # Crear venta
         metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="Pago QR")
 
         venta = Venta.objects.create(
@@ -138,8 +158,129 @@ def pago_qr(request):
             "nuevo_cliente": creado
         })
 
-    # Vista GET
     return render(request, "ventas/seleccionar_cajero.html", {
         "cajeros": cajeros,
         "total": total
+    })
+
+from django.utils.timezone import localdate
+
+
+@login_required
+def cajero_reservas(request):
+    # Verificar que es empleado
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    # Verificar que sea cajero
+    if cajero.cargo.cargo != "Cajero":
+        messages.error(request, "No eres cajero.")
+        return redirect("home")
+
+    # Fecha de hoy
+    hoy = localdate()
+
+    # Todas las reservas del cajero de hoy
+    reservas_hoy = Reserva.objects.filter(
+        cajero=cajero,
+        fecha__date=hoy
+    ).order_by("-fecha")
+
+    # Separarlas por estado
+    pendientes = reservas_hoy.filter(estado="Pendiente")
+    confirmadas = reservas_hoy.filter(estado="Confirmada")
+
+    return render(request, "ventas/cajero_reservas.html", {
+        "pendientes": pendientes,
+        "confirmadas": confirmadas,
+    })
+
+@login_required
+def cajero_reserva_detalle(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    # ✅ Seguridad: un cajero solo ve sus reservas
+    if reserva.cajero != cajero:
+        messages.error(request, "No tienes permiso para ver esta reserva.")
+        return redirect("cajero_reservas")
+
+    detalles = reserva.detalles.select_related("producto")
+
+    return render(request, "ventas/cajero_reserva_detalle.html", {
+        "reserva": reserva,
+        "detalles": detalles
+    })
+
+@login_required
+def confirmar_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    if reserva.cajero != cajero:
+        messages.error(request, "No tienes permiso para confirmar esta reserva.")
+        return redirect("cajero_reservas")
+
+    if reserva.estado != "Pendiente":
+        messages.warning(request, "La reserva ya fue procesada.")
+        return redirect("cajero_reservas")
+
+    # ✅ Crear venta
+    metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="Reserva Confirmada")
+
+    venta = Venta.objects.create(
+        id_cliente=reserva.cliente,
+        id_empleado=cajero,
+        id_pago=metodo_pago,
+        descuento=0,
+        reserva=reserva  # 🔥 vincula la reserva con la venta
+    )
+
+    # ✅ Crear detalle de venta
+    for det in reserva.detalles.all():
+        DetalleVenta.objects.create(
+            id_venta=venta,
+            id_producto=det.producto,
+            cantidad=det.cantidad
+        )
+
+    # ✅ Cambiar estado
+    reserva.estado = "Confirmada"
+    reserva.save()
+
+    messages.success(request, f"Reserva #{reserva.id} confirmada correctamente.")
+    return redirect("cajero_reservas")
+
+@login_required
+def mis_ventas(request):
+    try:
+        cliente = request.user.cliente
+    except:
+        messages.error(request, "No eres cliente.")
+        return redirect("home")
+
+    ventas = Venta.objects.filter(id_cliente=cliente).select_related('reserva').order_by('-fecha')
+
+    return render(request, "ventas/mis_ventas.html", {"ventas": ventas})
+
+@login_required
+def detalle_venta(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id, id_cliente__usuario=request.user)
+    detalles = venta.detalleventa_set.select_related('id_producto')
+    return render(request, "ventas/detalle_venta.html", {
+        "venta": venta,
+        "detalles": detalles
     })

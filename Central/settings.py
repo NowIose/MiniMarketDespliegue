@@ -95,6 +95,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # ✅ Agregado
+                'Usuarios.context_processors.notificaciones_cajero',
             ],
         },
     },
@@ -111,7 +114,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_market',
         'USER': 'postgres',
-        'PASSWORD': '2077',
+        'PASSWORD': 'gabo2004',
         'HOST': 'localhost',   # en minúsculas, no "LOCALHOST"
         'PORT': '5432',
     }

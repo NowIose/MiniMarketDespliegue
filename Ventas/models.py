@@ -8,24 +8,24 @@ class MetodoPago(models.Model):
 
 
     def __str__(self):
-     return self.descripcion
+        return self.descripcion
 
 class Venta(models.Model):
-   fecha=models.DateField(auto_now_add=True) #guarda automaticamente la fecha
-   descuento=models.DecimalField(max_digits=5, decimal_places=2,default=0)
-   id_cliente=models.ForeignKey(Cliente,on_delete=models.CASCADE,null=False,related_name="ventas")
-   id_empleado=models.ForeignKey(Empleado,on_delete=models.CASCADE,null=False,related_name="ventas")
-   id_pago=models.ForeignKey(MetodoPago,on_delete=models.CASCADE,null=False,related_name="ventas")
-
-   @property
-   def total_venta(self):
-       subtotal=sum(d.cantidad * d.precio for d in self.detalleventa_Set.all())
-       monto_descuento=subtotal * (self.descuento / 100)
-       return subtotal-monto_descuento
-   
-   def __str__(self):
-       return f"{self.id_cliente.nombre} {self.fecha.strftime('%Y-%m-%d')}"
-   
+    fecha=models.DateField(auto_now_add=True) #guarda automaticamente la fecha
+    descuento=models.DecimalField(max_digits=5, decimal_places=2,default=0)
+    id_cliente=models.ForeignKey(Cliente,on_delete=models.CASCADE,null=False,related_name="ventas")
+    id_empleado=models.ForeignKey(Empleado,on_delete=models.CASCADE,null=False,related_name="ventas")
+    id_pago=models.ForeignKey(MetodoPago,on_delete=models.CASCADE,null=False,related_name="ventas")
+    reserva = models.OneToOneField('Reserva', on_delete=models.SET_NULL, null=True, blank=True, related_name="venta")
+    @property
+    def total_venta(self):
+        subtotal = sum(d.cantidad * d.id_producto.precio_venta for d in self.detalleventa_set.all())
+        monto_descuento = subtotal * (self.descuento / 100)
+        return subtotal - monto_descuento
+    
+    def __str__(self):
+        return f"{self.id_cliente.nombre} {self.fecha.strftime('%Y-%m-%d')}"
+    
 class DetalleVenta(models.Model):
     id_venta=models.ForeignKey(Venta,on_delete=models.CASCADE,null=False)
     id_producto=models.ForeignKey(Producto,on_delete=models.CASCADE,null=False)
@@ -90,3 +90,38 @@ class ItemCarrito(models.Model):
 
     class Meta:
         unique_together = ('carrito', 'producto')  # evita productos duplicados
+
+#crear una nueva tabla o models para reserva
+class Reserva(models.Model):
+    ESTADOS = (
+        ("Pendiente", "Pendiente"),
+        ("Confirmada", "Confirmada"),
+        ("Cancelada", "Cancelada"),
+    )
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="reservas")
+    cajero = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name="reservas")
+    fecha = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default="Pendiente")
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"Reserva #{self.id} - {self.cliente.usuario.username}"
+    
+
+class DetalleReserva(models.Model):
+    reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name="detalles")
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()
+
+    def subtotal(self):
+        return self.cantidad * self.producto.precio_venta
+    
+class Notificacion(models.Model):
+    cajero = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name="notificaciones")
+    mensaje = models.CharField(max_length=255)
+    fecha = models.DateTimeField(auto_now_add=True)
+    leido = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Notificación para {self.cajero.usuario.username}"
