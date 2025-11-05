@@ -8,6 +8,9 @@
   {% if request.user.is_authenticated and request.user.empleado.cargo.cargo == "Gerente" %}
     <div class="text-end mb-3">
       <a href="{% url 'crear_categoria' %}" class="btn btn-primary">+ Crear categoría</a>
+      <a href="{% url 'inventario:lista_retiros' %}" class="btn btn-outline-danger btn-sm">
+      📦 Ver Retiros
+    </a>
     </div>
   {% endif %}
 

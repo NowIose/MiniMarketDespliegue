@@ -29,6 +29,12 @@ urlpatterns = [
     path('categorias/', producto_views.listar_categorias, name='listar_categorias'),
     path('ventas/', include('Ventas.urls')),
 
+
+
+
+    #cilo3
+    path('inventario/', include(('Inventario.urls', 'inventario'), namespace='inventario')),
+
 ]
 # Configuración para servir archivos multimedia durante el desarrollo imagenes de productos NUEVO
 from django.conf.urls.static import static

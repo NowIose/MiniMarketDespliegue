@@ -72,8 +72,14 @@
     {% if not categoria.categoria_padre %}
       <a href="{% url 'crear_subcategoria' categoria.id %}" class="btn btn-success btn-sm">➕ Agregar subcategoría</a>
     {% endif %}
+     <!-- 🚀 Nuevo botón para módulo de retiros -->
+    <a href="{% url 'inventario:lista_retiros' %}" class="btn btn-outline-danger btn-sm">
+      📦 Ver Retiros
+    </a>
+
   </div>
 {% endif %}
+
 
 {# 🔽 Botón volver abajo #}
 <div class="mt-4 text-center">
