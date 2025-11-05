@@ -48,17 +48,30 @@
                                         <li><a class="dropdown-item" href="{% url 'ver_clientes' %}">Clientes</a></li>
                                         <li><a class="dropdown-item" href="{% url 'ver_empleados' %}">Empleados</a></li>
                                         <li><a class="dropdown-item" href="{% url 'ver_bitacora' %}">Bitácora</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'listar_proveedores'%}"> Proveedores</a></li>
                                     </ul>
                                 </li>
                             {% else %}
-                                {% if user.empleado.estado %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'ver_productos' %}">Productos</a>
-                                    </li>
+                                {% if user.empleado.cargo.cargo == "Encargado de Almacen" %}
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="almacenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Panel Encargado de Almacén
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="almacenDropdown">
+                                        <li><a class="dropdown-item" href="{% url 'ver_productos' %}">Productos</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'listar_proveedores'%}"> Proveedores</a></li>
+                                    </ul>
+                                </li>
                                 {% else %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'completar_empleado' %}">Completar Registro</a>
-                                    </li>
+                                    {% if user.empleado.estado %}
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'ver_productos' %}">Productos</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'completar_empleado' %}">Completar Registro</a>
+                                        </li>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         {% endif %}

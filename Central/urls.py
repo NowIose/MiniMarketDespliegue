@@ -28,6 +28,7 @@ urlpatterns = [
     path('productos/', include('Productos.urls')),
     path('categorias/', producto_views.listar_categorias, name='listar_categorias'),
     path('ventas/', include('Ventas.urls')),
+    path('inventario/', include('Inventario.urls')),
 
 ]
 # Configuración para servir archivos multimedia durante el desarrollo imagenes de productos NUEVO
