@@ -18,7 +18,6 @@ from decouple import config, Csv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -30,7 +29,6 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,6 +36,7 @@ INSTALLED_APPS = [
     'Productos',
     'Ventas',
     'Inventario',
+    'Reportes',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,7 +47,8 @@ INSTALLED_APPS = [
 ]
 
 ###### MODELO DE USUARIO PERSONALIZADO
-AUTH_USER_MODEL = 'Usuarios.Usuario'   # IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJANGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
+# IMPORTANTE CUANDO USAMOS ABSTRACTUSER DJANGO POR DEFECTO USA 'auth.User' ENTONCES HAY QUE DECIRLE QUE USE NUESTRO MODELO
+AUTH_USER_MODEL = 'Usuarios.Usuario'
 ##############################
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/categorias/'
@@ -108,7 +108,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Central.wsgi.application'
 
-
 # ============================================================
 # BASE DE DATOS
 # ============================================================
@@ -127,14 +126,29 @@ if config('RENDER', default=False, cast=bool):
     }
 else:
     # 🧑‍💻 Config local
-    DATABASES = {
+    """ DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': config('DB_NAME', default='db_market'),
             'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='2077'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
+        }
+    } """
+
+    """
+    configuración usada porque el anterior lanzaba error de conección por
+    (contraseña erronea)
+    """
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'db_market',
+            'USER': 'postgres',
+            'PASSWORD': '123456789',
+            'HOST': 'localhost',   # en minúsculas, no "LOCALHOST"
+            'PORT': '5432',
         }
     }
 

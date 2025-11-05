@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Panel de Reportes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-3">Reporte de Ventas</h2>
+
+    <!-- Formulario de filtros para reporte de ventas-->
+    <form action="{% url 'reporte_ventas' %}" method="get" class="row g-3 mb-4">
+        <!-- {% csrf_token %} -->
+        <div class="col-md-3">
+            <label for="fecha_inicio" class="form-label">Fecha inicio:</label>
+            <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+        </div>
+
+        <div class="col-md-3">
+            <label for="fecha_fin" class="form-label">Fecha fin:</label>
+            <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+        </div>
+
+        <div class="col-md-3">
+            <!-- selecciona el cliente en especifico o por defecto a todos -->
+            <label for="cliente" class="form-label">Cliente:</label>    
+            <select name="cliente" id="cliente" class="form-select">
+                <option value="todos" {% if cliente.id == "todos" or not cliente.id %}selected{% endif %}>Todos</option>
+                {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {% if cliente.id|stringformat:"s" == cliente.id %}selected{% endif %}>
+                        {{ cliente.first_name }} {{ cliente.last_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="formato" class="form-label">Formato</label>
+            <select name="formato" id="formato" class="form-select">
+                <option value="pdf" {% if formato == "pdf" %}selected{% endif %}>PDF</option>
+                <option value="excel" {% if formato == "excel" %}selected{% endif %}>Excel</option>
+            </select> 
+        </div>
+
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Generar Reporte</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

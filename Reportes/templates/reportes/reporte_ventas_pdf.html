@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Ventas</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .filtros {
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tfoot td {
+            font-weight: bold;
+            background-color: #eaeaea;
+        }
+
+        .total {
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        .gran-total {
+            font-size: 14px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+            border-top: 2px solid #333;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Ventas</h1>
+    <h2>Período: 
+        {% if fecha_inicio %} {{ fecha_inicio }} {% else %} - {% endif %} 
+        a 
+        {% if fecha_fin %} {{ fecha_fin }} {% else %} - {% endif %}
+    </h2>
+
+    <div class="filtros">
+        <p><strong>Cliente:</strong> 
+            {% if cliente and cliente != "todos" %}
+                {{ cliente }}
+            {% else %}
+                Todos
+            {% endif %}
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Empleado</th>
+                <th>Pago</th>
+                <th>Total (Bs)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ venta.fecha }}</td>
+                <td>{{ venta.cliente }}</td>    
+                <td>{{ venta.empleado }}</td>
+                <td>{{ venta.pago }}</td>
+                <td>{{ venta.total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No se encontraron ventas en este período</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" class="total">Gran Total</td>
+                <td>{{ gran_total }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</body>

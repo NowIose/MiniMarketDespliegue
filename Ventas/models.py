@@ -1,3 +1,4 @@
+"""Models de Ventas"""
 from django.db import models
 from Usuarios.models import Cliente, Empleado
 from Productos.models import Producto
