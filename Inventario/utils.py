@@ -3,13 +3,13 @@ from .models import DetalleSuministro, Retiro, DetalleRetiro
 
 def generar_retiros_automaticos():
     hoy = date.today()
-    # ✅ Buscar productos vencidos en los detalles del suministro
+    #  Buscar productos vencidos en los detalles del suministro
     detalles_vencidos = DetalleSuministro.objects.filter(fecha_ven__lte=hoy, estado=True)
 
     if not detalles_vencidos.exists():
         return None
 
-    # ✅ Crear retiro automático (sin empleado)
+    #  Crear retiro automático (sin empleado)
     retiro_auto = Retiro.objects.create(tipo=Retiro.AUTOMATICO)
 
     for detalle in detalles_vencidos:
