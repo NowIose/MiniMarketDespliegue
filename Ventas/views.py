@@ -97,20 +97,23 @@ def pago_qr(request):
     if request.method == "POST":
         id_cajero = request.POST.get("cajero")
         metodo = request.POST.get("metodo")
-
         empleado = Empleado.objects.get(usuario_id=id_cajero)
 
-        # ✅ OPCIÓN 1: Reserva
+        # ------------------------------------------------------
+        # 1) RESERVA
+        # ------------------------------------------------------
         if metodo == "reserva":
             reserva = Reserva.objects.create(
                 cliente=cliente,
                 cajero=empleado,
                 total=total,
             )
+
             Notificacion.objects.create(
                 cajero=empleado,
                 mensaje=f"Nuevo pedido de reserva del cliente {request.user.username}."
             )
+
             for item in items:
                 DetalleReserva.objects.create(
                     reserva=reserva,
@@ -126,43 +129,22 @@ def pago_qr(request):
                 "total": total
             })
 
-        # ✅ OPCIÓN 2: Pago QR (sin cambios)
-        datos_pago = f"Pago de {total} Bs. por {request.user.username} - Supermercado XYZ (Cajero: {empleado.usuario.username})"
-        qr = qrcode.make(datos_pago)
-        buffer = BytesIO()
-        qr.save(buffer, format="PNG")
-        qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+        # ------------------------------------------------------
+        # 2) PAYPAL → Redirección
+        # ------------------------------------------------------
+        elif metodo == "paypal":
+            return redirect("iniciar_pago_paypal")
 
-        metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="Pago QR")
-
-        venta = Venta.objects.create(
-            id_cliente=cliente,
-            id_empleado=empleado,
-            id_pago=metodo_pago,
-            descuento=0
-        )
-
-        for item in items:
-            DetalleVenta.objects.create(
-                id_venta=venta,
-                id_producto=item.producto,
-                cantidad=item.cantidad
-            )
-
-        carrito.items.all().delete()
-
-        return render(request, "ventas/pago_qr.html", {
-            "qr_base64": qr_base64,
-            "total": total,
-            "cajero": empleado,
-            "nuevo_cliente": creado
-        })
+        # ------------------------------------------------------
+        # 3) QR BANCO UNIÓN (ESTÁTICO)
+        # ------------------------------------------------------
+        elif metodo == "qr":
+            return redirect("pago_union")
 
     return render(request, "ventas/seleccionar_cajero.html", {
         "cajeros": cajeros,
         "total": total
     })
-
 from django.utils.timezone import localdate
 
 
@@ -219,6 +201,25 @@ def cajero_reserva_detalle(request, reserva_id):
         "reserva": reserva,
         "detalles": detalles
     })
+
+@login_required
+def marcar_entregado(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    try:
+        cajero = request.user.empleado
+    except Empleado.DoesNotExist:
+        messages.error(request, "No eres cajero.")
+        return redirect("home")
+
+    # autorización: solo cajero asignado o gerente puede marcar
+    if venta.id_empleado != cajero and not request.user.es_gerente:
+        messages.error(request, "No tienes permiso.")
+        return redirect("cajero_reservas")
+
+    venta.entregado = True
+    venta.save()
+    messages.success(request, f"Venta #{venta.id} marcada como entregada.")
+    return redirect("cajero_reservas")
 
 @login_required
 def confirmar_reserva(request, reserva_id):
@@ -283,4 +284,385 @@ def detalle_venta(request, venta_id):
     return render(request, "ventas/detalle_venta.html", {
         "venta": venta,
         "detalles": detalles
+    })
+
+# ventas/views.py (fragmentos completos)
+import paypalrestsdk
+from decimal import Decimal
+from django.shortcuts import redirect, render, get_object_or_404
+from django.http import HttpResponse
+from django.contrib import messages
+from django.urls import reverse
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+
+from Productos.models import Producto
+from Usuarios.models import Cliente, Empleado
+from .models import Carrito, ItemCarrito, Venta, DetalleVenta, MetodoPago, Reserva
+
+from .paypal_utils import format_decimal_for_paypal
+
+@login_required
+def iniciar_pago_paypal(request):
+    # CONFIGURAR PAYPAL
+    paypalrestsdk.configure({
+        "mode": settings.PAYPAL_MODE,
+        "client_id": settings.PAYPAL_CLIENT_ID,
+        "client_secret": settings.PAYPAL_CLIENT_SECRET,
+    })
+    """
+    Inicia el pago por PayPal usando el carrito del usuario (Carrito, ItemCarrito).
+    Método: POST recomendado (pero aquí también aceptamos GET para pruebas rápidas).
+    """
+    # Recuperar carrito del usuario (crea si no existe)
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+
+    items_qs = carrito.items.select_related("producto").all()
+    if not items_qs.exists():
+        messages.error(request, "Tu carrito está vacío.")
+        return redirect('ver_carrito')
+
+    # Construir lista de items y calcular total
+    items_for_paypal = []
+    total = Decimal("0.00")
+
+    for it in items_qs:
+        prod = it.producto
+        qty = Decimal(it.cantidad)
+        price = Decimal(prod.precio_venta)
+        subtotal = (price * qty).quantize(Decimal("0.01"))
+        total += subtotal
+
+        items_for_paypal.append({
+            "name": prod.nombre,
+            "sku": f"prod_{prod.id}",
+            "price": format_decimal_for_paypal(price),
+            "currency": "USD",  # Ver notas abajo sobre moneda
+            "quantity": int(it.cantidad),
+        })
+
+    total_str = format_decimal_for_paypal(total)
+
+    # Crear el objeto Payment de PayPal
+    base_url = request.build_absolute_uri('/')[:-1]  # dominio con / al final; lo quitamos
+    return_url = base_url + reverse('paypal_success')
+    cancel_url = base_url + reverse('paypal_cancel')
+
+    payment = paypalrestsdk.Payment({
+        "intent": "sale",
+        "payer": {"payment_method": "paypal"},
+        "redirect_urls": {
+            "return_url": return_url,   # PayPal redirige aquí tras aprobar el pago
+            "cancel_url": cancel_url
+        },
+        "transactions": [{
+            "item_list": {"items": items_for_paypal},
+            "amount": {
+                "total": total_str,
+                "currency": "USD"
+            },
+            "description": f"Compra desde Supermercado - usuario: {request.user.username}"
+        }]
+    })
+
+    if payment.create():
+        # Guardar payment.id en session temporalmente para referencia (opcional)
+        request.session['paypal_payment_id'] = payment.id
+        # Encontrar link de aprobación y redireccionar
+        for link in payment.links:
+            if link.rel == "approval_url":
+                approval_url = str(link.href)
+                return redirect(approval_url)
+        messages.error(request, "Error: no se encontró URL de aprobación en PayPal.")
+        return redirect('ver_carrito')
+    else:
+        # Log o mostrar error
+        messages.error(request, f"Error creando el pago PayPal: {payment.error}")
+        return redirect('ver_carrito')
+
+
+@login_required
+def paypal_success(request):
+    """
+    PayPal redirect here after user approves the payment.
+    Ejecuta el pago y crea Venta + DetalleVenta.
+    """
+    payment_id = request.GET.get('paymentId')
+    payer_id = request.GET.get('PayerID')
+
+    if not payment_id or not payer_id:
+        messages.error(request, "Parámetros PayPal faltantes.")
+        return redirect('ver_carrito')
+
+    # Buscar el objeto Payment en PayPal
+    payment = paypalrestsdk.Payment.find(payment_id)
+
+    if not payment:
+        messages.error(request, "No se encontró el pago en PayPal.")
+        return redirect('ver_carrito')
+
+    # Ejecutar el pago
+    if payment.execute({"payer_id": payer_id}):
+        # Pago exitoso -> crear Venta y DetalleVenta
+        # Obtener carrito actual del usuario
+        carrito = get_object_or_404(Carrito, usuario=request.user)
+        items_qs = carrito.items.select_related("producto").all()
+        if not items_qs.exists():
+            messages.error(request, "Tu carrito ya está vacío (no se pudo crear la venta).")
+            return redirect('listar_categorias')
+
+        # Obtener/crear Cliente
+        cliente, _ = Cliente.objects.get_or_create(usuario=request.user)
+
+        # Seleccionar un empleado válido para asignar a la venta:
+        # Intentamos un "Cajero" activo, si no existe usamos el primer empleado disponible.
+        empleado = None
+        try:
+            empleado = Empleado.objects.filter(estado=True, cargo__cargo__iexact="Cajero").first()
+            if not empleado:
+                empleado = Empleado.objects.first()
+        except Exception:
+            empleado = None
+
+        if empleado is None:
+            # No podemos crear la venta si la FK es obligatoria; se puede ajustar el modelo en el futuro.
+            messages.warning(request, "No hay empleados configurados. Crea al menos un Empleado para registrar la venta.")
+            # Dejamos el carrito intacto para que el admin lo revise.
+            return redirect('ver_carrito')
+
+        metodo_pago, _ = MetodoPago.objects.get_or_create(descripcion="PayPal")
+
+        # Crear la Venta
+        venta = Venta.objects.create(
+            id_cliente=cliente,
+            id_empleado=empleado,
+            id_pago=metodo_pago,
+            descuento=0
+        )
+
+        # Crear detalles de venta
+        for it in items_qs:
+            DetalleVenta.objects.create(
+                id_venta=venta,
+                id_producto=it.producto,
+                cantidad=it.cantidad
+            )
+
+        # Limpiar carrito
+        carrito.items.all().delete()
+
+        messages.success(request, f"Pago procesado correctamente. Venta #{venta.id} registrada.")
+        # Redirige a detalle de venta o a historial
+        return redirect('detalle_venta', venta_id=venta.id)
+    else:
+        messages.error(request, f"Error ejecutando el pago: {payment.error}")
+        return redirect('ver_carrito')
+
+
+@login_required
+def paypal_cancel(request):
+    messages.info(request, "Pago cancelado por el usuario.")
+    return redirect('ver_carrito')
+
+# ventas/views.py (añadir al final o en lugar adecuado)
+import qrcode
+import base64
+from io import BytesIO
+from django.http import HttpResponse, FileResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+
+from .emv_qr import build_emv_payload
+from .models import Carrito, Venta, DetalleVenta, MetodoPago
+
+@login_required
+def pago_qr_interoperable(request):
+    """
+    Genera QR interoperable EMV y lo muestra; permite descargar PDF.
+    Usa Carrito del usuario actual.
+    """
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    items = carrito.items.select_related("producto")
+    if not items.exists():
+        messages.error(request, "Tu carrito está vacío.")
+        return redirect("ver_carrito")
+
+    total = carrito.total()
+    # Datos del comercio - debes completar con los tuyos
+    merchant_account = "77788899900"  # reemplaza por tu ID comercial o PSP
+    merchant_name = "SupermercadoXYZ"
+    merchant_city = "LA PAZ"
+
+    payload = build_emv_payload(merchant_account, merchant_name, merchant_city, amount=total, currency="BOB")
+    # Generar imagen QR
+    qr = qrcode.make(payload)
+    buffer = BytesIO()
+    qr.save(buffer, format="PNG")
+    b64 = base64.b64encode(buffer.getvalue()).decode()
+    # render plantilla con qr_base64
+    return render(request, "ventas/pago_qr_interoperable.html", {
+        "qr_base64": b64,
+        "total": total,
+        "payload": payload,
+        "merchant_name": merchant_name,
+    })
+
+@login_required
+def descargar_pdf_qr(request):
+    """
+    Genera PDF con QR (a partir del payload que creamos). 
+    Si quieres, puedes pasar merchant info o buscar del carrito.
+    """
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    items = carrito.items.select_related("producto")
+    if not items.exists():
+        messages.error(request, "Tu carrito está vacío.")
+        return redirect("ver_carrito")
+
+    total = carrito.total()
+    merchant_account = "77788899900"
+    merchant_name = "SupermercadoXYZ"
+    merchant_city = "LA PAZ"
+    payload = build_emv_payload(merchant_account, merchant_name, merchant_city, amount=total, currency="BOB")
+
+    # Generar QR image
+    qr = qrcode.make(payload)
+    buf = BytesIO()
+    qr.save(buf, format="PNG")
+    buf.seek(0)
+
+    # Crear PDF en memoria
+    pdf_buf = BytesIO()
+    c = canvas.Canvas(pdf_buf, pagesize=A4)
+    width, height = A4
+
+    # Título
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 80, f"Pago QR - {merchant_name}")
+
+    # Dibujar QR
+    # reportlab necesita una imagen en disco o un BytesIO con ImageReader
+    from reportlab.lib.utils import ImageReader
+    img = ImageReader(buf)
+    c.drawImage(img, 50, height - 350, width=250, height=250)
+
+    # Texto del monto y payload
+    c.setFont("Helvetica", 12)
+    c.drawString(320, height - 150, f"Total: {total} BOB")
+    c.drawString(320, height - 170, f"Ciudad: {merchant_city}")
+    c.drawString(320, height - 190, f"Escanee con su app bancaria para pagar")
+
+    c.showPage()
+    c.save()
+    pdf_buf.seek(0)
+
+    filename = f"qr_pago_{request.user.username}.pdf"
+    return FileResponse(pdf_buf, as_attachment=True, filename=filename)
+
+
+@csrf_exempt
+def webhook_pago_psp(request):
+    """
+    Endpoint para que tu PSP/banco notifique pagos.
+    Debes dar esta URL al proveedor: /ventas/webhook/payments/
+    El proveedor debe enviar JSON con al menos:
+        { "venta_id": 123, "status": "PAID", "provider_ref": "ABC123" }
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "method_not_allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    # Validar: PSP puede enviar su firma, token, etc. IMPLEMENTA validación real en producción.
+    venta_id = data.get("venta_id")
+    status = data.get("status")
+    provider_ref = data.get("provider_ref")
+
+    if not venta_id:
+        return JsonResponse({"error": "missing venta_id"}, status=400)
+
+    try:
+        venta = Venta.objects.get(id=venta_id)
+    except Venta.DoesNotExist:
+        return JsonResponse({"error": "venta_not_found"}, status=404)
+
+    # Marcar pagado si status equivale a pago
+    if status and status.upper() in ("PAID", "SUCCEEDED", "COMPLETED"):
+        venta.estado_pago = "Pagado"
+        venta.pago_referencia = provider_ref
+        venta.save()
+        return JsonResponse({"ok": True})
+
+    return JsonResponse({"ok": False, "reason": "status_not_paid"})
+
+@login_required
+def pago_union(request):
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    items = carrito.items.select_related("producto")
+
+    if not items.exists():
+        messages.error(request, "Tu carrito está vacío.")
+        return redirect("ver_carrito")
+
+    total = sum(i.producto.precio_venta * i.cantidad for i in items)
+
+    return render(request, "ventas/pago_union.html", {
+        "total": total,
+        "qr_path": "/media/qr_banco_union.jpeg"   # Tu QR estático real
+    })
+
+@login_required
+def confirmar_pago_union(request):
+    usuario = request.user
+    cliente = Cliente.objects.get(usuario=usuario)
+    cajero = Empleado.objects.filter(cargo__cargo="Cajero").first()
+
+    carrito = Carrito.objects.get(usuario=usuario)
+
+    metodo_pago = MetodoPago.objects.get_or_create(descripcion="Pago QR")[0]
+
+    # 🔵 Crear venta
+    venta = Venta.objects.create(
+        id_cliente=cliente,
+        id_empleado=cajero,
+        id_pago=metodo_pago,
+        estado_pago="Pagado",
+        entregado=False,   # el cajero debe entregarlo
+        pago_referencia="QR-BancoUnion"
+    )
+
+    # 🔵 Pasar detalles del carrito
+    for item in carrito.items.all():
+        DetalleVenta.objects.create(
+            id_venta=venta,
+            id_producto=item.producto,
+            cantidad=item.cantidad
+        )
+
+    # 🔵 Crear notificación al cajero
+    Notificacion.objects.create(
+        cajero=cajero,
+        mensaje=f"Nuevo pago QR de {cliente.usuario.username}, venta #{venta.id}"
+    )
+
+    carrito.items.all().delete()
+
+    return redirect("venta_exitosa")
+
+@login_required
+def ventas_cajero(request):
+    try:
+        cajero = request.user.empleado
+    except:
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    ventas = Venta.objects.filter(id_empleado=cajero).order_by("-fecha")
+
+    return render(request, "ventas/ventas_cajero.html", {
+        "ventas": ventas
     })

@@ -67,6 +67,11 @@
                                     </a>
                                 </li>
 
+                                <!-- 🔥 Nuevo botón para ver todas las ventas -->
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'todas_las_ventas' %}">Ventas</a>
+                                </li>
+
                             {% elif user.empleado.cargo.cargo == "Encargado de Almacen" %}
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="almacenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

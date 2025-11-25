@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Todas las Ventas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Historial de Ventas</h2>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cajero</th>
+                <th>Cliente</th>
+                <th>Método de Pago</th>
+                <th>Total</th>
+                <th>Ver</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ v.id }}</td>
+                <td>{{ v.fecha|date:"d/m/Y" }}</td>
+
+                <td>
+                    {% if v.id_empleado %}
+                        {{ v.id_empleado.usuario.username }}
+                    {% else %}
+                        <span class="text-muted">Sin cajero</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if v.id_cliente %}
+                        {{ v.id_cliente.usuario.username }}
+                    {% else %}
+                        <span class="text-muted">Sin cliente</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ v.id_pago.descripcion }}</td>
+                <td class="fw-bold">Bs. {{ v.total_venta }}</td>
+
+                <td>
+                    <button class="btn btn-sm btn-primary"
+                            onclick="toggleDetalles({{ v.id }})">
+                        Ver detalles
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Fila oculta donde aparecerán los detalles -->
+            <tr id="detalles-{{ v.id }}" style="display:none;">
+                <td colspan="7">
+                    <div id="contenido-{{ v.id }}"></div>
+                </td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function toggleDetalles(venta_id) {
+    const fila = document.getElementById("detalles-" + venta_id);
+
+    // Si ya está visible → oculta
+    if (fila.style.display === "table-row") {
+        fila.style.display = "none";
+        return;
+    }
+
+    // Mostrar fila vacía
+    fila.style.display = "table-row";
+
+    // Cargar detalles vía AJAX
+    fetch(`/ventas/detalles/${venta_id}/`)
+    .then(r => r.json())
+    .then(data => {
+        let html = `
+            <table class="table table-sm table-bordered mt-2">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio (Bs)</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        data.detalles.forEach(d => {
+            html += `
+                <tr>
+                    <td>${d.producto}</td>
+                    <td>${d.cantidad}</td>
+                    <td>${d.precio}</td>
+                    <td>${d.subtotal}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById("contenido-" + venta_id).innerHTML = html;
+    });
+}
+</script>
+
+{% endblock %}

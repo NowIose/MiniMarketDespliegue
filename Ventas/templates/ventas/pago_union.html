@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+
+    <div class="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto text-center">
+
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+            Pago con QR – Banco Unión
+        </h2>
+
+        <p class="text-lg mb-2 text-gray-600">
+            Monto a pagar:
+        </p>
+
+        <p class="text-3xl font-semibold mb-6 text-blue-600">
+            {{ total }} Bs
+        </p>
+
+        <p class="text-gray-500 mb-4">
+            Escanea este QR con la app del Banco Unión:
+        </p>
+
+        <img src="/media/qr_banco_union.jpeg" 
+             alt="QR Banco Unión" 
+             class="mx-auto rounded-xl shadow-lg mb-6"
+             style="width:260px; height:260px;">
+
+        <a href="{% url 'confirmar_pago_union' %}"
+            class="w-full bg-green-600 hover:bg-green-700 text-black py-3 px-6 rounded-lg font-semibold inline-block">
+            He realizado el pago ✔
+        </a>
+    </div>
+
+</div>
+{% endblock %}

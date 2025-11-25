@@ -14,7 +14,19 @@ from pathlib import Path
 import os
 import dj_database_url
 from decouple import config, Csv
+import paypalrestsdk
+from dotenv import load_dotenv
 
+load_dotenv()  # <-- ESTO CARGA EL .env
+PAYPAL_MODE = os.environ.get("PAYPAL_MODE", "sandbox")
+PAYPAL_CLIENT_ID = os.environ.get("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.environ.get("PAYPAL_CLIENT_SECRET", "")
+
+paypalrestsdk.configure({
+    "mode": PAYPAL_MODE,  # "sandbox" o "live"
+    "client_id": PAYPAL_CLIENT_ID,
+    "client_secret": PAYPAL_CLIENT_SECRET
+})
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -133,7 +145,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': config('DB_NAME', default='db_market'),
             'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='2077'),
+            'PASSWORD': config('DB_PASSWORD', default='gabo2004'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
         }

@@ -8,6 +8,7 @@
       <th>Fecha</th>
       <th>Estado</th>
       <th>Total</th>
+      <th>Método</th>  <!-- 🔥 NUEVA COLUMNA -->
       <th>Ver Detalle</th>
     </tr>
   </thead>
@@ -24,10 +25,18 @@
         {% endif %}
       </td>
       <td>{{ venta.total_venta }} Bs</td>
-      <td><a href="{% url 'detalle_venta' venta.id %}" class="btn btn-sm btn-primary">Ver</a></td>
+
+      <!-- 🔥 NUEVA COLUMNA: MÉTODO DE PAGO -->
+      <td>{{ venta.id_pago.descripcion }}</td>
+
+      <td>
+        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-sm btn-primary">
+          Ver
+        </a>
+      </td>
     </tr>
     {% empty %}
-    <tr><td colspan="5" class="text-center">No tienes ventas registradas.</td></tr>
+    <tr><td colspan="6" class="text-center">No tienes ventas registradas.</td></tr>
     {% endfor %}
   </tbody>
 </table>

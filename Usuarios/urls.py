@@ -16,9 +16,10 @@ urlpatterns = [
     path('bitacora/', views.ver_bitacora, name='ver_bitacora'),
     path('asignar_empleado/<int:usuario_id>/', views.asignar_empleado, name='asignar_empleado'),
     path('completar_empleado/', views.completar_registro_empleado, name='completar_empleado'),
+    path("ventas/todas/", views.todas_las_ventas, name="todas_las_ventas"),
+    path("detalles/<int:venta_id>/", views.detalles_venta_ajax),
 
-
-   path(
+    path(
         "password_reset/",
         auth_views.PasswordResetView.as_view(
             template_name="registration/password_reset.html"

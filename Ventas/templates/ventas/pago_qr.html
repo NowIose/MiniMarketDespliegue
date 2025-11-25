@@ -3,18 +3,32 @@
 
 {% block content %}
 <div class="container mt-5 text-center">
-  <h3 class="mb-3">✅ Pago con QR</h3>
-  <p class="text-muted">Cajero: <strong>{{ cajero.usuario.username }}</strong></p>
-  <p>Total pagado: <strong>{{ total }} Bs.</strong></p>
+  
+  <h3 class="mb-3">📲 Pago con QR</h3>
 
-  <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR de Pago" class="img-fluid mt-3" style="max-width:300px;">
+  <p class="text-muted">
+      Cajero: <strong>{{ cajero.username }}</strong>
+  </p>
+
+  <p class="fs-5">
+      Total a pagar: <strong>{{ total }} Bs.</strong>
+  </p>
+
+  <!-- Imagen QR -->
+  <h4 class="mb-3">Escanea este QR para pagar</h4>
+  <img src="/media/{{ qr_filename }}" alt="QR Banco Unión" class="w-48">
 
   {% if nuevo_cliente %}
-    <p class="mt-4 text-success">🎉 ¡Bienvenido! Se te ha registrado como nuevo cliente.</p>
+    <p class="mt-4 text-success fw-bold">
+        🎉 ¡Bienvenido! Se te ha registrado como nuevo cliente.
+    </p>
   {% endif %}
 
   <div class="mt-4">
-    <a href="{% url 'listar_categorias' %}" class="btn btn-primary">🏪 Volver a Productos</a>
+    <a href="{% url 'listar_categorias' %}" class="btn btn-primary">
+        🏪 Volver a Productos
+    </a>
   </div>
+
 </div>
 {% endblock %}
