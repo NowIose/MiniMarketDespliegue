@@ -38,7 +38,7 @@
                         <!-- 🧾 Cliente -->
                         {% if user.cliente %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'mis_ventas' %}">Mis Ventas</a>
+                                <a class="nav-link" href="{% url 'mis_ventas' %}">Mis Compras</a>
                             </li>
                         {% endif %}
 
@@ -70,6 +70,9 @@
                                 <!-- 🔥 Nuevo botón para ver todas las ventas -->
                                 <li class="nav-item">
                                     <a class="nav-link" href="{% url 'todas_las_ventas' %}">Ventas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'lista_devoluciones' %}">Devoluciones</a>
                                 </li>
 
                             {% elif user.empleado.cargo.cargo == "Encargado de Almacen" %}

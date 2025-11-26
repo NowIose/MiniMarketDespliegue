@@ -29,6 +29,12 @@ urlpatterns = [
     path("ventas/pago_union/", views.pago_union, name="pago_union"),
     path("ventas/pago_union/confirmar/", views.confirmar_pago_union, name="confirmar_pago_union"),
 
-    path("ventas/cajero/", views.ventas_cajero, name="ventas_cajero")
+    path("ventas/cajero/", views.ventas_cajero, name="ventas_cajero"),
+
+    path('todas/', views.todas_las_ventas, name='todas_las_ventas'),
+    
+    path('detalles/<int:venta_id>/', views.detalles_venta_ajax, name='venta_detalles'),
+    path('devolver/<int:venta_id>/<int:producto_id>/', views.devolver_producto, name='devolver_producto'),
+
+    path("devoluciones/", views.lista_devoluciones, name="lista_devoluciones"),
 ]
-    # Otras rutas de Ventas pueden ir aquí

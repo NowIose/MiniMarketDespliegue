@@ -5,7 +5,6 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">Historial de Ventas</h2>
-
     <table class="table table-striped table-bordered">
         <thead class="table-primary">
             <tr>
@@ -65,22 +64,31 @@
 </div>
 
 <script>
+// Obtener fecha actual del sistema en formato YYYY-MM-DD
+function hoyISO() {
+    const h = new Date();
+    return h.toISOString().split("T")[0];
+}
+
 function toggleDetalles(venta_id) {
     const fila = document.getElementById("detalles-" + venta_id);
 
-    // Si ya está visible → oculta
     if (fila.style.display === "table-row") {
         fila.style.display = "none";
         return;
     }
 
-    // Mostrar fila vacía
     fila.style.display = "table-row";
 
-    // Cargar detalles vía AJAX
     fetch(`/ventas/detalles/${venta_id}/`)
     .then(r => r.json())
     .then(data => {
+        console.log("FECHA API:", data.fecha); // <-- aquí ves exactamente qué viene
+        console.log("HOY:", hoyISO());
+
+        let ventaEsHoy = (data.fecha.slice(0, 10) === hoyISO());
+        console.log("ventaEsHoy?", ventaEsHoy);
+
         let html = `
             <table class="table table-sm table-bordered mt-2">
                 <thead class="table-secondary">
@@ -89,18 +97,33 @@ function toggleDetalles(venta_id) {
                         <th>Cantidad</th>
                         <th>Precio (Bs)</th>
                         <th>Subtotal</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
         data.detalles.forEach(d => {
+
+            let boton = "";
+            if (ventaEsHoy) {
+                boton = `
+                    <button class="btn btn-danger btn-sm"
+                            onclick="devolverProducto(${venta_id}, ${d.producto_id})">
+                        Devolver
+                    </button>
+                `;
+            } else {
+                boton = `<span class="text-muted">No disponible</span>`;
+            }
+
             html += `
                 <tr>
                     <td>${d.producto}</td>
                     <td>${d.cantidad}</td>
                     <td>${d.precio}</td>
                     <td>${d.subtotal}</td>
+                    <td>${boton}</td>
                 </tr>
             `;
         });
@@ -111,6 +134,45 @@ function toggleDetalles(venta_id) {
         `;
 
         document.getElementById("contenido-" + venta_id).innerHTML = html;
+    });
+}
+
+function devolverProducto(venta_id, producto_id) {
+
+    let cantidad = prompt("¿Cuántas unidades deseas devolver?");
+    if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
+        alert("Cantidad inválida");
+        return;
+    }
+
+    let motivo = prompt("Motivo de la devolución:") || "Sin motivo";
+
+    let opcion = prompt(
+        "Seleccione una opción:\n" +
+        "1 = Inventario (regresar al stock)\n" +
+        "2 = Retiro (sacar del inventario)"
+    );
+
+    let accion = null;
+    if (opcion === "1") accion = "inventario";
+    else if (opcion === "2") accion = "retiro";
+    else {
+        alert("Opción inválida");
+        return;
+    }
+
+    fetch(`/ventas/devolver/${venta_id}/${producto_id}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `cantidad=${cantidad}&motivo=${motivo}&accion=${accion}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.mensaje);
+        location.reload();
     });
 }
 </script>

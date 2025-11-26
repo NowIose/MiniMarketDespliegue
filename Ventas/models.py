@@ -42,9 +42,9 @@ class DetalleVenta(models.Model):
         return self.id_producto.nombre + " - " + str(self.cantidad) + " unidades"
 
     
-
+from django.utils import timezone
 class Devolucion(models.Model):
-    fecha=models.DateField(auto_now_add=True)
+    fecha=models.DateField(default=timezone.now)
 
     def __str__(self):
        return f"Devolucion {self.id} - {self.fecha.strftime('%Y-%m-%d')}"

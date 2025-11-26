@@ -337,3 +337,13 @@ def detalles_venta_ajax(request, venta_id):
     } for d in venta.detalleventa_set.all()]
 
     return JsonResponse({"detalles": detalles})
+
+def detalle_venta(request, id):
+    venta = Venta.objects.get(id=id)
+
+    detalles = DetalleVenta.objects.filter(venta=venta)
+
+    return render(request, "ventas/detalle_venta.html", {
+        "venta": venta,
+        "detalles": detalles
+    })

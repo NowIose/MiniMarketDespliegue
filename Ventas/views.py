@@ -97,6 +97,11 @@ def pago_qr(request):
     if request.method == "POST":
         id_cajero = request.POST.get("cajero")
         metodo = request.POST.get("metodo")
+
+        # 🟦 GUARDAR EN SESIÓN
+        request.session["cajero_id"] = id_cajero
+        request.session["metodo_pago"] = metodo
+
         empleado = Empleado.objects.get(usuario_id=id_cajero)
 
         # ------------------------------------------------------
@@ -130,13 +135,13 @@ def pago_qr(request):
             })
 
         # ------------------------------------------------------
-        # 2) PAYPAL → Redirección
+        # 2) PAYPAL
         # ------------------------------------------------------
         elif metodo == "paypal":
             return redirect("iniciar_pago_paypal")
 
         # ------------------------------------------------------
-        # 3) QR BANCO UNIÓN (ESTÁTICO)
+        # 3) QR BANCO UNIÓN
         # ------------------------------------------------------
         elif metodo == "qr":
             return redirect("pago_union")
@@ -618,40 +623,49 @@ def pago_union(request):
 @login_required
 def confirmar_pago_union(request):
     usuario = request.user
-    cliente = Cliente.objects.get(usuario=usuario)
-    cajero = Empleado.objects.filter(cargo__cargo="Cajero").first()
 
+    # Recuperar cajero guardado
+    cajero_id = request.session.get("cajero_id")
+
+    if not cajero_id:
+        messages.error(request, "No se seleccionó cajero para esta venta.")
+        return redirect("ver_carrito")
+
+    cajero = Empleado.objects.get(usuario__id=cajero_id)
+
+    # Obtener carrito
     carrito = Carrito.objects.get(usuario=usuario)
+    items = carrito.items.select_related("producto")
 
-    metodo_pago = MetodoPago.objects.get_or_create(descripcion="Pago QR")[0]
+    cliente = Cliente.objects.get(usuario=usuario)
 
-    # 🔵 Crear venta
+    metodo_pago, _ = MetodoPago.objects.get_or_create(
+        descripcion="Pago QR Banco Unión"
+    )
+
+    # Crear venta con CAJERO
     venta = Venta.objects.create(
         id_cliente=cliente,
-        id_empleado=cajero,
+        id_empleado=cajero,      # ⬅ YA NO ES NULL
         id_pago=metodo_pago,
-        estado_pago="Pagado",
-        entregado=False,   # el cajero debe entregarlo
+        estado_pago="Pendiente",
+        entregado=False,
         pago_referencia="QR-BancoUnion"
     )
 
-    # 🔵 Pasar detalles del carrito
-    for item in carrito.items.all():
+    # Crear detalles
+    for item in items:
         DetalleVenta.objects.create(
             id_venta=venta,
             id_producto=item.producto,
             cantidad=item.cantidad
         )
 
-    # 🔵 Crear notificación al cajero
-    Notificacion.objects.create(
-        cajero=cajero,
-        mensaje=f"Nuevo pago QR de {cliente.usuario.username}, venta #{venta.id}"
-    )
-
+    # Limpiar carrito
     carrito.items.all().delete()
 
-    return redirect("venta_exitosa")
+    messages.success(request, f"Pago registrado. Venta #{venta.id} pendiente de verificación.")
+    return redirect("mis_ventas")
 
 @login_required
 def ventas_cajero(request):
@@ -665,4 +679,126 @@ def ventas_cajero(request):
 
     return render(request, "ventas/ventas_cajero.html", {
         "ventas": ventas
+    })
+
+from django.shortcuts import render, get_object_or_404
+from .models import Venta, DetalleVenta
+
+def todas_las_ventas(request):
+    ventas = Venta.objects.all().order_by('-fecha','-id')
+    return render(request, "ventas/todas_las_ventas.html", {"ventas": ventas})
+
+
+def detalle_venta(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    detalles = DetalleVenta.objects.filter(id_venta=venta)
+
+    return render(request, "ventas/detalle_venta.html", {
+        "venta": venta,
+        "detalles": detalles
+    })
+
+
+def detalles_venta_ajax(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+
+    detalles = [{
+        "producto": d.id_producto.nombre,
+        "cantidad": float(d.cantidad),
+        "precio": float(d.id_producto.precio_venta),
+        "subtotal": float(d.cantidad * d.id_producto.precio_venta),
+        "producto_id": d.id_producto.id,
+    } for d in venta.detalleventa_set.all()]
+
+    if hasattr(venta.fecha, "strftime"):
+        fecha_str = venta.fecha.strftime("%Y-%m-%d")
+    else:
+        fecha_str = str(venta.fecha)[:10]
+
+    return JsonResponse({
+        "detalles": detalles,
+        "fecha": fecha_str
+    })
+from django.http import JsonResponse
+
+from django.views.decorators.csrf import csrf_exempt
+from .models import Venta, DetalleVenta, Devolucion, DetalleDevolucion
+from Productos.models import Producto
+from Inventario.models import Retiro,DetalleRetiro
+from django.db import transaction
+from django.utils import timezone
+from decimal import Decimal
+@csrf_exempt
+def devolver_producto(request, venta_id, producto_id):
+    if request.method != "POST":
+        return JsonResponse({"mensaje": "Método no permitido"}, status=405)
+
+    try:
+        venta = Venta.objects.get(id=venta_id)
+        detalle = DetalleVenta.objects.get(id_venta=venta, id_producto_id=producto_id)
+        producto = detalle.id_producto
+
+        cantidad_devolver = float(request.POST.get("cantidad", 1))
+        motivo = request.POST.get("motivo", "Sin motivo")
+        accion = request.POST.get("accion")   # "inventario" o "retiro"
+
+        # Validaciones
+        if cantidad_devolver <= 0:
+            return JsonResponse({"mensaje": "La cantidad debe ser mayor a 0"})
+
+        if cantidad_devolver > detalle.cantidad:
+            return JsonResponse({"mensaje": "No puedes devolver más de lo comprado"})
+
+        with transaction.atomic():
+
+            # Nueva devolución
+            devolucion = Devolucion.objects.create()
+
+            # Registrar detalle
+            DetalleDevolucion.objects.create(
+                id_devolucion=devolucion,
+                id_detalle_venta=detalle,
+                cantidad=cantidad_devolver,
+                motivo=motivo
+            )
+
+            # Procesar inventario o retiro
+            if accion == "inventario":
+                producto.cantidad += Decimal(cantidad_devolver)
+                producto.save()
+
+            elif accion == "retiro":
+
+                # Obtener cajero actual
+                empleado = Empleado.objects.get(usuario=request.user)
+
+                retiro = Retiro.objects.create(
+                    tipo=Retiro.MANUAL,
+                    empleado=empleado
+                )
+
+                DetalleRetiro.objects.create(
+                    retiro=retiro,
+                    producto=producto,
+                    cantidad=cantidad_devolver,
+                    motivo=motivo
+                )
+
+            # Actualizar detalle venta
+            detalle.cantidad -= Decimal(cantidad_devolver)
+            if detalle.cantidad <= 0:
+                detalle.delete()
+            else:
+                detalle.save()
+
+        return JsonResponse({"mensaje": "Devolución registrada correctamente"})
+
+
+    except Exception as e:
+        return JsonResponse({"mensaje": f"Error: {str(e)}"})
+    
+def lista_devoluciones(request):
+    devoluciones = Devolucion.objects.all().order_by("-fecha")
+    return render(request, "ventas/devoluciones.html", {
+        "devoluciones": devoluciones
     })
