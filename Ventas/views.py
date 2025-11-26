@@ -685,8 +685,31 @@ from django.shortcuts import render, get_object_or_404
 from .models import Venta, DetalleVenta
 
 def todas_las_ventas(request):
-    ventas = Venta.objects.all().order_by('-fecha','-id')
-    return render(request, "ventas/todas_las_ventas.html", {"ventas": ventas})
+    ventas = Venta.objects.all().order_by('-fecha')
+
+    # 🔎 filtros
+    nombre = request.GET.get("nombre", "").strip()
+    fecha_desde = request.GET.get("desde", "")
+    fecha_hasta = request.GET.get("hasta", "")
+
+    # filtro por nombre de usuario del cliente
+    if nombre:
+        ventas = ventas.filter(id_cliente__usuario__username__icontains=nombre)
+
+    # filtro por fecha DESDE
+    if fecha_desde:
+        ventas = ventas.filter(fecha__gte=fecha_desde)
+
+    # filtro por fecha HASTA
+    if fecha_hasta:
+        ventas = ventas.filter(fecha__lte=fecha_hasta)
+
+    return render(request, "ventas/todas_las_ventas.html", {
+        "ventas": ventas,
+        "filtro_nombre": nombre,
+        "filtro_desde": fecha_desde,
+        "filtro_hasta": fecha_hasta,
+    })
 
 
 def detalle_venta(request, venta_id):
@@ -798,7 +821,259 @@ def devolver_producto(request, venta_id, producto_id):
         return JsonResponse({"mensaje": f"Error: {str(e)}"})
     
 def lista_devoluciones(request):
-    devoluciones = Devolucion.objects.all().order_by("-fecha")
+    devoluciones = obtener_devoluciones_filtradas(request)
+
+    # --- detectar exportaciones ---
+    export = request.GET.get("export")
+
+    if export == "excel":
+        return exportar_devoluciones_excel(request)
+
+    if export == "word":
+        return exportar_devoluciones_word(request)
+
+    if export == "pdf":
+        return exportar_devoluciones_pdf(request)
+
+    # --- si no exporta, solo mostrar la página ---
     return render(request, "ventas/devoluciones.html", {
         "devoluciones": devoluciones
     })
+
+def obtener_devoluciones_filtradas(request):
+    devoluciones = Devolucion.objects.all().order_by("-fecha")
+
+    fecha = request.GET.get("fecha")
+    desde = request.GET.get("desde")
+    hasta = request.GET.get("hasta")
+    producto = request.GET.get("producto")
+    motivo = request.GET.get("motivo")
+
+    if fecha:
+        devoluciones = devoluciones.filter(fecha=fecha)
+
+    if desde:
+        devoluciones = devoluciones.filter(fecha__gte=desde)
+
+    if hasta:
+        devoluciones = devoluciones.filter(fecha__lte=hasta)
+
+    if producto:
+        devoluciones = devoluciones.filter(
+            detalledevolucion__id_detalle_venta__id_producto__nombre__icontains=producto
+        ).distinct()
+
+    if motivo:
+        devoluciones = devoluciones.filter(
+            detalledevolucion__motivo__icontains=motivo
+        ).distinct()
+
+    return devoluciones
+
+from openpyxl import Workbook
+from django.http import HttpResponse
+from Ventas.models import DetalleDevolucion
+
+def exportar_excel(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ventas"
+
+    ws.append([
+        "Venta ID", "Fecha", "Cliente", "Cajero", "Metodo de Pago",
+        "Producto", "Cantidad", "Precio Venta", "Subtotal", "Descuento (%)", "Total Final"
+    ])
+
+    detalles = DetalleVenta.objects.select_related(
+        "id_venta", "id_producto", "id_venta__id_cliente__usuario"
+    )
+
+    for det in detalles:
+        venta = det.id_venta
+        precio = float(det.id_producto.precio_venta)
+        cantidad = float(det.cantidad)
+        subtotal = precio * cantidad
+
+        ws.append([
+            venta.id,
+            venta.fecha.strftime("%Y-%m-%d"),
+            venta.id_cliente.usuario.username,
+            venta.id_empleado.usuario.username,
+            venta.id_pago.descripcion,
+            det.id_producto.nombre,
+            cantidad,
+            precio,
+            subtotal,
+            float(venta.descuento),
+            float(venta.total_venta)
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="ventas.xlsx"'
+    wb.save(response)
+    return response
+
+from docx import Document
+from django.http import HttpResponse
+
+def exportar_word(request):
+    document = Document()
+    document.add_heading("Reporte de Ventas", level=1)
+
+    detalles = DetalleVenta.objects.select_related(
+        "id_venta", "id_producto", "id_venta__id_cliente__usuario"
+    )
+
+    for det in detalles:
+        venta = det.id_venta
+        precio = float(det.id_producto.precio_venta)
+        subtotal = float(det.cantidad) * precio
+
+        p = document.add_paragraph()
+        p.add_run(f"Venta #{venta.id}\n").bold = True
+        p.add_run(f"Fecha: {venta.fecha}\n")
+        p.add_run(f"Cliente: {venta.id_cliente.usuario.username}\n")
+        p.add_run(f"Cajero: {venta.id_empleado.usuario.username}\n")
+        p.add_run(f"Método de pago: {venta.id_pago.descripcion}\n")
+        p.add_run(f"Producto: {det.id_producto.nombre}\n")
+        p.add_run(f"Cantidad: {det.cantidad}\n")
+        p.add_run(f"Precio: {precio}\n")
+        p.add_run(f"Subtotal: {subtotal}\n")
+        p.add_run(f"Descuento: {venta.descuento}%\n")
+        p.add_run(f"Total final venta: {venta.total_venta}\n")
+        document.add_paragraph("---------------------------------------------")
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response["Content-Disposition"] = 'attachment; filename=\"ventas.docx\"'
+    document.save(response)
+    return response
+
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
+
+def exportar_pdf(request):
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="ventas.pdf"'
+
+    p = canvas.Canvas(response)
+    p.setFont("Helvetica", 12)
+
+    y = 800
+    p.drawString(50, y, "REPORTE DE VENTAS")
+    y -= 40
+
+    detalles = DetalleVenta.objects.select_related(
+        "id_venta", "id_producto", "id_venta__id_cliente__usuario"
+    )
+
+    for det in detalles:
+        venta = det.id_venta
+        precio = float(det.id_producto.precio_venta)
+        subtotal = float(det.cantidad) * precio
+
+        if y < 100:
+            p.showPage()
+            p.setFont("Helvetica", 12)
+            y = 800
+
+        p.drawString(50, y, f"Venta #{venta.id}  |  Fecha: {venta.fecha}  |  Cliente: {venta.id_cliente.usuario.username}")
+        y -= 20
+        p.drawString(50, y, f"Cajero: {venta.id_empleado.usuario.username}  |  Pago: {venta.id_pago.descripcion}")
+        y -= 20
+        p.drawString(50, y, f"Producto: {det.id_producto.nombre}  | Cant: {det.cantidad} | Precio: {precio} | Subtotal: {subtotal}")
+        y -= 20
+        p.drawString(50, y, f"Descuento: {venta.descuento}% | Total Venta: {venta.total_venta}")
+        y -= 40
+
+    p.save()
+    return response
+
+def exportar_devoluciones_excel(request):
+    devoluciones = obtener_devoluciones_filtradas(request)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Devoluciones"
+
+    ws.append(["ID", "Fecha", "Producto", "Cantidad", "Motivo"])
+
+    for dev in devoluciones:
+        for det in dev.detalledevolucion_set.all():
+            ws.append([
+                dev.id,
+                dev.fecha.strftime("%Y-%m-%d"),
+                det.id_detalle_venta.id_producto.nombre,
+                float(det.cantidad),
+                det.motivo,
+            ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=devoluciones.xlsx"
+
+    wb.save(response)
+    return response
+
+def exportar_devoluciones_word(request):
+    devoluciones = obtener_devoluciones_filtradas(request)
+
+    document = Document()
+    document.add_heading("Reporte de Devoluciones", level=1)
+
+    for dev in devoluciones:
+        document.add_heading(f"Devolución #{dev.id}", level=2)
+        document.add_paragraph(f"Fecha: {dev.fecha}")
+
+        for det in dev.detalledevolucion_set.all():
+            p = document.add_paragraph()
+            p.add_run(f"- Producto: {det.id_detalle_venta.id_producto.nombre}\n")
+            p.add_run(f"  Cantidad: {det.cantidad}\n")
+            p.add_run(f"  Motivo: {det.motivo}\n")
+
+        document.add_paragraph("---------------------------------------------")
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response["Content-Disposition"] = 'attachment; filename="devoluciones.docx"'
+    document.save(response)
+    return response
+
+def exportar_devoluciones_pdf(request):
+    devoluciones = obtener_devoluciones_filtradas(request)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = "attachment; filename=devoluciones.pdf"
+
+    p = canvas.Canvas(response)
+    p.setFont("Helvetica", 12)
+
+    y = 800
+    p.drawString(50, y, "REPORTE DE DEVOLUCIONES")
+    y -= 40
+
+    for dev in devoluciones:
+        if y < 120:
+            p.showPage()
+            p.setFont("Helvetica", 12)
+            y = 800
+
+        p.drawString(50, y, f"Devolución #{dev.id} — {dev.fecha}")
+        y -= 20
+
+        for det in dev.detalledevolucion_set.all():
+            p.drawString(
+                70, y,
+                f"- {det.id_detalle_venta.id_producto.nombre} | {det.cantidad} | {det.motivo}"
+            )
+            y -= 20
+
+        y -= 15
+
+    p.save()
+    return response

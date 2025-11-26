@@ -7,6 +7,41 @@
     <h2 class="mb-4">Historial de Ventas</h2>
     <table class="table table-striped table-bordered">
         <thead class="table-primary">
+            <div class="container mt-4 mb-4">
+                <form method="GET" class="row g-3 p-3 border rounded shadow-sm bg-light">
+
+                    <div class="col-md-4">
+                        <label class="form-label">Buscar por nombre de usuario</label>
+                        <input type="text" name="nombre" class="form-control"
+                            value="{{ filtro_nombre }}" placeholder="Ej: juan23">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Desde</label>
+                        <input type="date" name="desde" class="form-control"
+                            value="{{ filtro_desde }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Hasta</label>
+                        <input type="date" name="hasta" class="form-control"
+                            value="{{ filtro_hasta }}">
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100">Filtrar</button>
+                    </div>
+
+                    <div class="col-md-12 text-end">
+                        <button type="button" onclick="imprimirTabla()" class="btn btn-success">
+                            🖨 Imprimir
+                        </button>
+                    <a href="{% url 'exportar_excel' %}" class="btn btn-success">Exportar Excel</a>
+                    <a href="{% url 'exportar_word' %}" class="btn btn-primary">Exportar Word</a>
+                    <a href="{% url 'exportar_pdf' %}" class="btn btn-danger">Exportar PDF</a>
+                    </div>
+                </form>
+            </div>
             <tr>
                 <th>ID</th>
                 <th>Fecha</th>
@@ -174,6 +209,9 @@ function devolverProducto(venta_id, producto_id) {
         alert(data.mensaje);
         location.reload();
     });
+}
+function imprimirTabla() {
+    window.print();
 }
 </script>
 

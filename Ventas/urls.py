@@ -37,4 +37,11 @@ urlpatterns = [
     path('devolver/<int:venta_id>/<int:producto_id>/', views.devolver_producto, name='devolver_producto'),
 
     path("devoluciones/", views.lista_devoluciones, name="lista_devoluciones"),
+    path("exportar/excel/", views.exportar_excel, name="exportar_excel"),
+    path("exportar/word/", views.exportar_word, name="exportar_word"),
+    path("exportar/pdf/", views.exportar_pdf, name="exportar_pdf"),
+
+    path("devoluciones/exportar/excel/", views.exportar_devoluciones_excel, name="exportar_devoluciones_excel"),
+    path("devoluciones/exportar/word/", views.exportar_devoluciones_word, name="exportar_devoluciones_word"),
+    path("devoluciones/exportar/pdf/", views.exportar_devoluciones_pdf, name="exportar_devoluciones_pdf"),
 ]

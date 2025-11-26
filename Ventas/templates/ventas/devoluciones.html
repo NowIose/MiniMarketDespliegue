@@ -4,6 +4,42 @@
 <h2 class="mb-4">Historial de Devoluciones</h2>
 
 <table class="table table-bordered table-striped">
+    <form method="get" class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <label class="form-label">Fecha exacta</label>
+            <input type="date" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Producto</label>
+            <input type="text" name="producto" class="form-control" placeholder="Nombre del producto" value="{{ request.GET.producto }}">
+        </div>
+
+
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary w-100">Filtrar</button>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <a href="{% url 'lista_devoluciones' %}" class="btn btn-secondary w-100">Limpiar</a>
+        </div>
+    </form>
+    <div class="mb-3">
+        <a href="?{% querystring %}&export=excel" class="btn btn-success">📗 Excel</a>
+        <a href="?{% querystring %}&export=word" class="btn btn-primary">📘 Word</a>
+        <a href="?{% querystring %}&export=pdf" class="btn btn-danger">📕 PDF</a>
+    </div>
     <thead class="table-dark">
         <tr>
             <th>ID</th>
@@ -34,4 +70,5 @@
         {% endfor %}
     </tbody>
 </table>
-{% endblock %}
+{% endblock %} 
+
