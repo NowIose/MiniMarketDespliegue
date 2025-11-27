@@ -69,7 +69,13 @@
     </a>
   </div>
 {% endif %}
-
+{% if request.user.is_authenticated and request.user.is_empleado %}
+  <div class="container mt-3 text-end">
+    <a href="{% url 'lista_ventas_cajero' %}" class="btn btn-morado btn-sm">
+      📄 Ver Ventas Registradas
+    </a>
+  </div>
+{% endif %}
 <div class="container ventas-container">
   {% block ventas_content %}
   <!-- Aquí irá el contenido específico de cada vista -->

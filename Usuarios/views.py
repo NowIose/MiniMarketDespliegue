@@ -304,3 +304,46 @@ def confirmar_reserva(request, reserva_id):
 
     messages.success(request, f"Reserva #{reserva.id} confirmada correctamente.")
     return redirect("cajero_reservas")
+
+from Ventas.models import Venta   # <-- importa tu modelo real
+
+@login_required
+def todas_las_ventas(request):
+
+    if not hasattr(request.user, "empleado"):
+        messages.error(request, "No eres empleado.")
+        return redirect("home")
+
+    cargo = request.user.empleado.cargo.cargo
+    if cargo not in ["Cajero", "Gerente"]:
+        messages.error(request, "No tienes permiso para ver las ventas.")
+        return redirect("home")
+
+    ventas = Venta.objects.select_related(
+        "id_pago", "id_cliente__usuario", "id_empleado__usuario"
+    ).order_by("-fecha","id")
+
+    return render(request, "ventas/todas_las_ventas.html", {"ventas": ventas})
+
+def detalles_venta_ajax(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+
+    detalles = [{
+        "id_detalle": d.id,
+        "producto": d.id_producto.nombre,
+        "cantidad": float(d.cantidad),
+        "precio": float(d.id_producto.precio_venta),
+        "subtotal": float(d.cantidad * d.id_producto.precio_venta),
+    } for d in venta.detalleventa_set.all()]
+
+    return JsonResponse({"detalles": detalles})
+
+def detalle_venta(request, id):
+    venta = Venta.objects.get(id=id)
+
+    detalles = DetalleVenta.objects.filter(venta=venta)
+
+    return render(request, "ventas/detalle_venta.html", {
+        "venta": venta,
+        "detalles": detalles
+    })

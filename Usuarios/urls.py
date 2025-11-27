@@ -17,8 +17,7 @@ urlpatterns = [
     path('asignar_empleado/<int:usuario_id>/', views.asignar_empleado, name='asignar_empleado'),
     path('completar_empleado/', views.completar_registro_empleado, name='completar_empleado'),
 
-
-   path(
+    path(
         "password_reset/",
         auth_views.PasswordResetView.as_view(
             template_name="registration/password_reset.html"

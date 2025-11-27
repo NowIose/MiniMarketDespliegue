@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Venta{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>Detalle de Venta #{{ venta.id }}</h2>
+    <p><strong>Fecha:</strong> {{ venta.fecha }}</p>
+    <p><strong>Cajero:</strong> {{ venta.id_empleado.usuario.username }}</p>
+    <p><strong>Cliente:</strong>
+        {% if venta.id_cliente %}
+            {{ venta.id_cliente.usuario.username }}
+        {% else %}
+            <span class="text-muted">Sin cliente</span>
+        {% endif %}
+    </p>
+    <p><strong>Método de pago:</strong> {{ venta.id_pago.descripcion }}</p>
+
+    <hr>
+
+    <h4>Productos vendidos</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for d in detalles %}
+            <tr>
+                <td>{{ d.producto.nombre }}</td>
+                <td>{{ d.cantidad }}</td>
+                <td>Bs. {{ d.precio_unitario }}</td>
+                <td>Bs. {{ d.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3 class="fw-bold mt-3">Total: Bs. {{ venta.total_venta }}</h3>
+
+    <a href="{% url 'todas_ventas' %}" class="btn btn-secondary mt-3">Volver</a>
+
+</div>
+{% endblock %}

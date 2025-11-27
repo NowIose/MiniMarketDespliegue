@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Todas las Ventas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Historial de Ventas</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="table-primary">
+            <div class="container mt-4 mb-4">
+                <form method="GET" class="row g-3 p-3 border rounded shadow-sm bg-light">
+
+                    <div class="col-md-4">
+                        <label class="form-label">Buscar por nombre de usuario</label>
+                        <input type="text" name="nombre" class="form-control"
+                            value="{{ filtro_nombre }}" placeholder="Ej: juan23">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Desde</label>
+                        <input type="date" name="desde" class="form-control"
+                            value="{{ filtro_desde }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Hasta</label>
+                        <input type="date" name="hasta" class="form-control"
+                            value="{{ filtro_hasta }}">
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100">Filtrar</button>
+                    </div>
+
+                    <div class="col-md-12 text-end">
+                        <button type="button" onclick="imprimirTabla()" class="btn btn-success">
+                            🖨 Imprimir
+                        </button>
+                    <a href="{% url 'exportar_excel' %}" class="btn btn-success">Exportar Excel</a>
+                    <a href="{% url 'exportar_word' %}" class="btn btn-primary">Exportar Word</a>
+                    <a href="{% url 'exportar_pdf' %}" class="btn btn-danger">Exportar PDF</a>
+                    </div>
+                </form>
+            </div>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cajero</th>
+                <th>Cliente</th>
+                <th>Método de Pago</th>
+                <th>Total</th>
+                <th>Ver</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ v.id }}</td>
+                <td>{{ v.fecha|date:"d/m/Y" }}</td>
+
+                <td>
+                    {% if v.id_empleado %}
+                        {{ v.id_empleado.usuario.username }}
+                    {% else %}
+                        <span class="text-muted">Sin cajero</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if v.id_cliente %}
+                        {{ v.id_cliente.usuario.username }}
+                    {% else %}
+                        <span class="text-muted">Sin cliente</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ v.id_pago.descripcion }}</td>
+                <td class="fw-bold">Bs. {{ v.total_venta }}</td>
+
+                <td>
+                    <button class="btn btn-sm btn-primary"
+                            onclick="toggleDetalles({{ v.id }})">
+                        Ver detalles
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Fila oculta donde aparecerán los detalles -->
+            <tr id="detalles-{{ v.id }}" style="display:none;">
+                <td colspan="7">
+                    <div id="contenido-{{ v.id }}"></div>
+                </td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// Obtener fecha actual del sistema en formato YYYY-MM-DD
+function hoyISO() {
+    const h = new Date();
+    return h.toISOString().split("T")[0];
+}
+
+function toggleDetalles(venta_id) {
+    const fila = document.getElementById("detalles-" + venta_id);
+
+    if (fila.style.display === "table-row") {
+        fila.style.display = "none";
+        return;
+    }
+
+    fila.style.display = "table-row";
+
+    fetch(`/ventas/detalles/${venta_id}/`)
+    .then(r => r.json())
+    .then(data => {
+        console.log("FECHA API:", data.fecha); // <-- aquí ves exactamente qué viene
+        console.log("HOY:", hoyISO());
+
+        let ventaEsHoy = (data.fecha.slice(0, 10) === hoyISO());
+        console.log("ventaEsHoy?", ventaEsHoy);
+
+        let html = `
+            <table class="table table-sm table-bordered mt-2">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio (Bs)</th>
+                        <th>Subtotal</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        data.detalles.forEach(d => {
+
+            let boton = "";
+            if (ventaEsHoy) {
+                boton = `
+                    <button class="btn btn-danger btn-sm"
+                            onclick="devolverProducto(${venta_id}, ${d.producto_id})">
+                        Devolver
+                    </button>
+                `;
+            } else {
+                boton = `<span class="text-muted">No disponible</span>`;
+            }
+
+            html += `
+                <tr>
+                    <td>${d.producto}</td>
+                    <td>${d.cantidad}</td>
+                    <td>${d.precio}</td>
+                    <td>${d.subtotal}</td>
+                    <td>${boton}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById("contenido-" + venta_id).innerHTML = html;
+    });
+}
+
+function devolverProducto(venta_id, producto_id) {
+
+    let cantidad = prompt("¿Cuántas unidades deseas devolver?");
+    if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
+        alert("Cantidad inválida");
+        return;
+    }
+
+    let motivo = prompt("Motivo de la devolución:") || "Sin motivo";
+
+    let opcion = prompt(
+        "Seleccione una opción:\n" +
+        "1 = Inventario (regresar al stock)\n" +
+        "2 = Retiro (sacar del inventario)"
+    );
+
+    let accion = null;
+    if (opcion === "1") accion = "inventario";
+    else if (opcion === "2") accion = "retiro";
+    else {
+        alert("Opción inválida");
+        return;
+    }
+
+    fetch(`/ventas/devolver/${venta_id}/${producto_id}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `cantidad=${cantidad}&motivo=${motivo}&accion=${accion}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.mensaje);
+        location.reload();
+    });
+}
+function imprimirTabla() {
+    window.print();
+}
+</script>
+
+{% endblock %}

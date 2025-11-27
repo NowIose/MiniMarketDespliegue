@@ -17,6 +17,10 @@ class Venta(models.Model):
     id_empleado=models.ForeignKey(Empleado,on_delete=models.CASCADE,null=False,related_name="ventas")
     id_pago=models.ForeignKey(MetodoPago,on_delete=models.CASCADE,null=False,related_name="ventas")
     reserva = models.OneToOneField('Reserva', on_delete=models.SET_NULL, null=True, blank=True, related_name="venta")
+    # en Ventas/models.py (añadir a la clase Venta)
+    estado_pago = models.CharField(max_length=20, choices=(("Pendiente","Pendiente"),("Pagado","Pagado")), default="Pendiente")
+    pago_referencia = models.CharField(max_length=255, null=True, blank=True)  # id que devuelva PSP
+    entregado = models.BooleanField(default=False)
     @property
     def total_venta(self):
         subtotal = sum(d.cantidad * d.id_producto.precio_venta for d in self.detalleventa_set.all())
@@ -38,9 +42,9 @@ class DetalleVenta(models.Model):
         return self.id_producto.nombre + " - " + str(self.cantidad) + " unidades"
 
     
-
+from django.utils import timezone
 class Devolucion(models.Model):
-    fecha=models.DateField(auto_now_add=True)
+    fecha=models.DateField(default=timezone.now)
 
     def __str__(self):
        return f"Devolucion {self.id} - {self.fecha.strftime('%Y-%m-%d')}"
