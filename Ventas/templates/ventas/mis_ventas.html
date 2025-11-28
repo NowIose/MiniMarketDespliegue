@@ -3,6 +3,25 @@
 
 <h2 class="mb-4">Mis Compras</h2>
 
+<!-- FORMULARIO DE FILTRO POR FECHA -->
+<form method="GET" class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <label class="form-label">Filtrar por fecha:</label>
+        <input type="date" name="fecha" class="form-control"
+               value="{{ request.GET.fecha }}">
+    </div>
+
+    <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-primary w-100">Filtrar</button>
+    </div>
+
+    <div class="col-md-3 d-flex align-items-end">
+        <a href="{% url 'mis_ventas' %}" class="btn btn-secondary w-100">Limpiar</a>
+    </div>
+
+</form>
+
 <table class="table table-striped table-bordered">
     <thead class="table-primary">
         <tr>
@@ -18,7 +37,7 @@
     <tbody>
         {% for v in ventas %}
         <tr>
-            <td>{{ v.id }}</td>
+            <td>{{v.id}}</td>
             <td>{{ v.fecha|date:"d/m/Y" }}</td>
 
             <td>
@@ -35,7 +54,7 @@
 
             <td>
                 <button class="btn btn-sm btn-primary"
-                        onclick="toggleDetalles({{ v.id }})">
+                        onclick="toggleDetalles('{{ v.id }}')">
                     Ver
                 </button>
             </td>

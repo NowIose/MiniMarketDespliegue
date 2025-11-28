@@ -14,9 +14,12 @@
       Total a pagar: <strong>{{ total }} Bs.</strong>
   </p>
 
-  <!-- Imagen QR -->
+  {% load static %}
   <h4 class="mb-3">Escanea este QR para pagar</h4>
-  <img src="/media/{{ qr_filename }}" alt="QR Banco Unión" class="w-48">
+
+  <img src="{% static 'img/qr_banco_union.jpeg' %}" 
+       alt="QR Banco Unión" 
+       class="w-48">
 
   {% if nuevo_cliente %}
     <p class="mt-4 text-success fw-bold">

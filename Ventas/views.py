@@ -278,7 +278,12 @@ def mis_ventas(request):
         messages.error(request, "No eres cliente.")
         return redirect("home")
 
+    fecha = request.GET.get("fecha")
+
     ventas = Venta.objects.filter(id_cliente=cliente).select_related('reserva').order_by('-fecha')
+
+    if fecha and fecha != "":
+        ventas = ventas.filter(fecha=fecha)
 
     return render(request, "ventas/mis_ventas.html", {"ventas": ventas})
 

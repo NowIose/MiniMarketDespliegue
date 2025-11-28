@@ -22,15 +22,17 @@
             Escanea este QR con la app del Banco Unión:
         </p>
 
-        <img src="/media/qr_banco_union.jpeg" 
+        <!-- Imagen QR desde STATIC -->
+        <img src="{% static 'img/qr_banco_union.jpeg' %}" 
              alt="QR Banco Unión" 
              class="mx-auto rounded-xl shadow-lg mb-6"
              style="width:260px; height:260px;">
 
         <a href="{% url 'confirmar_pago_union' %}"
-            class="w-full bg-green-600 hover:bg-green-700 text-black py-3 px-6 rounded-lg font-semibold inline-block">
+           class="w-full bg-green-600 hover:bg-green-700 text-black py-3 px-6 rounded-lg font-semibold inline-block">
             He realizado el pago ✔
         </a>
+
     </div>
 
 </div>

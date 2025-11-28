@@ -145,7 +145,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': config('DB_NAME', default='db_market'),
             'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='gabo2004'),
+            'PASSWORD': config('DB_PASSWORD', default='2077'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
         }
@@ -203,6 +203,9 @@ USE_TZ = True
 # Archivos estáticos (CSS, JS, imágenes locales del proyecto)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # necesario para Render
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),                   # <-- añade esto
+]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ============================================================
